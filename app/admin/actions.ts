@@ -3,6 +3,8 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth';
 import { sql, isUuid } from '@/lib/db';
 import { storage, pagePath } from '@/lib/storage';
+import { ocrPage } from '@/lib/gemini';
+import { indexPages } from '@/lib/indexing';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
 function need(ok: unknown, msg: string): asserts ok {
@@ -108,4 +110,49 @@ export async function deleteDocument(id: string) {
   const paths = [d.storage_path, ...Array.from({ length: d.page_count }, (_, i) => pagePath(id, i + 1))];
   for (let i = 0; i < paths.length; i += 100) await storage().remove(paths.slice(i, i + 100));
   revalidatePath('/admin/documents');
+}
+
+// ── Pages (review) ───────────────────────────────────────────────
+const pageArgs = (documentId: string, pageNo: number) =>
+  need(isUuid(documentId) && Number.isInteger(pageNo) && pageNo >= 1, 'Bad page');
+
+export async function savePage(documentId: string, pageNo: number, text: string) {
+  await requireAdmin();
+  pageArgs(documentId, pageNo);
+  const r = await sql`
+    update pages set text = ${text}, reviewed = true, ocr_failed = false
+    where document_id = ${documentId} and page_no = ${pageNo}`;
+  need(r.count === 1, 'Page not found');
+  await indexPages(documentId, [pageNo]);
+  revalidatePath(`/admin/documents/${documentId}`);
+}
+
+export async function retryOcr(documentId: string, pageNo: number) {
+  await requireAdmin();
+  pageArgs(documentId, pageNo);
+  const { data, error } = await storage().download(pagePath(documentId, pageNo));
+  if (error) throw error;
+  const text = await ocrPage(new Uint8Array(await data.arrayBuffer()));
+  await sql`
+    update pages set text = ${text}, ocr_failed = false, reviewed = false
+    where document_id = ${documentId} and page_no = ${pageNo}`;
+  await indexPages(documentId, [pageNo]);
+  revalidatePath(`/admin/documents/${documentId}`);
+}
+
+export async function setUnitRange(documentId: string, from: number, to: number, unitId: string | null) {
+  await requireAdmin();
+  need(isUuid(documentId) && Number.isInteger(from) && Number.isInteger(to) && from >= 1 && from <= to, 'Bad page range');
+  need(unitId === null || isUuid(unitId), 'Bad unit');
+  if (unitId) {
+    const [ok] = await sql`
+      select 1 from units u join documents d on d.subject_id = u.subject_id
+      where u.id = ${unitId} and d.id = ${documentId}`;
+    need(ok, 'Unit does not belong to this subject');
+  }
+  const rows = await sql<{ page_no: number }[]>`
+    update pages set unit_id = ${unitId}
+    where document_id = ${documentId} and page_no between ${from} and ${to} returning page_no`;
+  await indexPages(documentId, rows.map((r) => r.page_no));
+  revalidatePath(`/admin/documents/${documentId}`);
 }
