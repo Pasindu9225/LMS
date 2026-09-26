@@ -1,0 +1,72 @@
+import { describe, it, expect } from 'vitest';
+import { chunkPage, mergeResults, linkCitations } from '@/lib/text';
+
+const squash = (s: string) => s.replace(/\s+/g, '');
+
+describe('chunkPage', () => {
+  it('returns [] for blank pages', () => {
+    expect(chunkPage('')).toEqual([]);
+    expect(chunkPage('  \n\n \n')).toEqual([]);
+  });
+
+  it('keeps a short page as one chunk', () => {
+    const page = 'මවුලය යනු ප්‍රමාණයේ ඒකකයයි.\n\nදෙවන ඡේදය.';
+    expect(chunkPage(page)).toEqual([page]);
+  });
+
+  it('groups paragraphs without exceeding 1500 chars or losing text', () => {
+    const para = 'අ'.repeat(500);
+    const page = Array(5).fill(para).join('\n\n');
+    const chunks = chunkPage(page);
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.every((c) => c.length <= 1500)).toBe(true);
+    expect(chunks.join('\n\n')).toBe(page);
+  });
+
+  it('splits a long paragraph at sentence ends', () => {
+    const page = 'මෙය වාක්‍යයකි. '.repeat(200).trim();
+    const chunks = chunkPage(page);
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.every((c) => c.length <= 1500 && c.endsWith('.'))).toBe(true);
+    expect(squash(chunks.join(''))).toBe(squash(page));
+  });
+
+  it('hard-cuts run-on text that has no breaks or punctuation', () => {
+    const page = 'ක'.repeat(4000);
+    const chunks = chunkPage(page);
+    expect(chunks.every((c) => c.length <= 1500)).toBe(true);
+    expect(chunks.join('')).toBe(page);
+  });
+
+  it('folds a short trailing piece (e.g. the page number) into the previous chunk', () => {
+    const page = `${'අ'.repeat(1300)}\n\n5`;
+    expect(chunkPage(page)).toEqual([page]);
+  });
+});
+
+describe('mergeResults', () => {
+  it('dedupes by id keeping the best score, sorts, and limits', () => {
+    const a = [{ id: 'x', similarity: 0.5 }, { id: 'y', similarity: 0.9 }];
+    const b = [{ id: 'x', similarity: 0.8 }, { id: 'z', similarity: 0.1 }];
+    expect(mergeResults([a, b], 2)).toEqual([{ id: 'y', similarity: 0.9 }, { id: 'x', similarity: 0.8 }]);
+  });
+
+  it('handles no results', () => {
+    expect(mergeResults([[], []], 8)).toEqual([]);
+  });
+});
+
+describe('linkCitations', () => {
+  it('links valid citations', () => {
+    expect(linkCitations('A [1] B [2]', 2)).toBe('A [[1]](#src-1) B [[2]](#src-2)');
+  });
+  it('leaves out-of-range numbers as plain text', () => {
+    expect(linkCitations('X [9] [0]', 8)).toBe('X [9] [0]');
+  });
+  it('splits grouped citations', () => {
+    expect(linkCitations('Y [1, 2]', 3)).toBe('Y [[1]](#src-1)[[2]](#src-2)');
+  });
+  it('does not touch existing markdown links', () => {
+    expect(linkCitations('[1](http://a.lk)', 3)).toBe('[1](http://a.lk)');
+  });
+});
