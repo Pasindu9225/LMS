@@ -1,5 +1,9 @@
+import dns from 'node:dns';
 import { GoogleGenAI } from '@google/genai';
 import { OCR_PROMPT } from '@/lib/prompts';
+
+// Some Sri Lankan ISPs advertise broken IPv6 routes; Google calls then time out after 10 s.
+dns.setDefaultResultOrder('ipv4first');
 
 let client: GoogleGenAI | undefined;
 const ai = () => (client ??= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }));
@@ -13,7 +17,8 @@ const model = (name: 'GEMINI_OCR_MODEL' | 'GEMINI_CHAT_MODEL' | 'GEMINI_EMBED_MO
 export const EMBED_DIMS = 768;
 
 /** Retries 429, 5xx and network errors (no status) with exponential backoff. */
-export async function withRetry<T>(fn: () => Promise<T>, retries = 3, baseMs = 1000): Promise<T> {
+// Default waits 4 s, 8 s, 16 s: Gemini "high demand" 503s often last longer than a few seconds.
+export async function withRetry<T>(fn: () => Promise<T>, retries = 3, baseMs = 4000): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await fn();
