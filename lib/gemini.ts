@@ -1,6 +1,6 @@
 import dns from 'node:dns';
-import { GoogleGenAI } from '@google/genai';
-import { OCR_PROMPT } from '@/lib/prompts';
+import { GoogleGenAI, Type } from '@google/genai';
+import { OCR_PROMPT, REWRITE_PROMPT } from '@/lib/prompts';
 
 // Some Sri Lankan ISPs advertise broken IPv6 routes; Google calls then time out after 10 s.
 dns.setDefaultResultOrder('ipv4first');
@@ -65,4 +65,38 @@ export async function embed(
     out.push(...res.embeddings!.map((e) => e.values!));
   }
   return out;
+}
+
+export async function rewriteQuestion(q: string): Promise<{ query_si: string; query_en: string; reply_lang: 'si' | 'en' }> {
+  const chatModel = model('GEMINI_CHAT_MODEL');
+  const res = await withRetry(() =>
+    ai().models.generateContent({
+      model: chatModel,
+      contents: q,
+      config: {
+        systemInstruction: REWRITE_PROMPT,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            query_si: { type: Type.STRING },
+            query_en: { type: Type.STRING },
+            reply_lang: { type: Type.STRING, enum: ['si', 'en'] },
+          },
+          required: ['query_si', 'query_en', 'reply_lang'],
+        },
+      },
+    }),
+  );
+  return JSON.parse(res.text ?? '{}');
+}
+
+/** Streams answer text. The single place to change if the chat provider changes. */
+export async function* generateAnswer(system: string, user: string): AsyncGenerator<string> {
+  const stream = await ai().models.generateContentStream({
+    model: model('GEMINI_CHAT_MODEL'),
+    contents: user,
+    config: { systemInstruction: system },
+  });
+  for await (const chunk of stream) if (chunk.text) yield chunk.text;
 }
