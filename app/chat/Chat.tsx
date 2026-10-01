@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -52,6 +53,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
   const [busy, setBusy] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const L = t[lang];
   const subjectName = (id: string | null) => {
     const s = subjects.find((x) => x.id === id);
@@ -123,6 +125,9 @@ export default function Chat({ subjects, conversations, conversationId, initialT
     } finally {
       inFlight.current = false;
       setBusy(false);
+      // Store this URL's fresh server tree in the router cache, so Back/Forward to this chat
+      // shows the new turn (and, after replaceState from /chat, the /chat/[id] page, not /chat).
+      router.refresh();
     }
   }
 

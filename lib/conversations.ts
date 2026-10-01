@@ -31,14 +31,18 @@ export async function getHistory(id: string): Promise<Turn[]> {
   return buildHistory([...rows]);
 }
 
-/** Logs one turn and bumps the conversation in a single statement (the CTE always runs). */
+/**
+ * Logs one turn and bumps the conversation in a single statement (the CTE always runs).
+ * The subselect logs with conversation_id null if the chat was deleted mid-stream, so the
+ * turn still counts toward the daily limit instead of failing on the foreign key.
+ */
 export function logTurn(t: {
   userId: string; subjectId: string; conversationId: string; question: string; answer: string; chunkIds: string[];
 }) {
   return sql`
     with bump as (update conversations set updated_at = now() where id = ${t.conversationId})
     insert into chat_logs (user_id, subject_id, conversation_id, question, answer, chunk_ids)
-    values (${t.userId}, ${t.subjectId}, ${t.conversationId}, ${t.question}, ${t.answer}, ${sql.array(t.chunkIds)}::uuid[])`;
+    values (${t.userId}, ${t.subjectId}, (select id from conversations where id = ${t.conversationId}), ${t.question}, ${t.answer}, ${sql.array(t.chunkIds)}::uuid[])`;
 }
 
 export async function chatPageData(userId: string) {

@@ -70,8 +70,11 @@ export type Turn = { question: string; answer: string };
 export const HISTORY_TURNS = 4;
 const HISTORY_ANSWER_MAX = 1500;
 
-/** Remove `[n]` / `[n, m]` citation markers and the space before them; markdown links stay. */
-export const stripCitations = (md: string) => md.replace(/ ?\[\d+(?:\s*,\s*\d+)*\](?!\()/g, '');
+/** Remove `[n]` / `[n, m]` citation markers and the space before them; markdown links and math spans ($[0, 1]$) stay. */
+export const stripCitations = (md: string) =>
+  md.split(/(\$\$[\s\S]*?\$\$|\$[^$\n]*\$)/)
+    .map((part, i) => (i % 2 ? part : part.replace(/ ?\[\d+(?:\s*,\s*\d+)*\](?!\()/g, '')))
+    .join('');
 
 /**
  * Model-ready history from turns ordered oldest first: the last HISTORY_TURNS turns, citations

@@ -75,6 +75,10 @@ describe('stripCitations', () => {
   it('removes single and grouped citations with the space before them', () => {
     expect(stripCitations('Mole is a unit [1]. It is big [2][3] and [4, 5].')).toBe('Mole is a unit. It is big and.');
   });
+  it('leaves numeric brackets inside math spans alone', () => {
+    const s = 'x is in $[0, 1]$ and $$A = [1, 2]$$ [3].';
+    expect(stripCitations(s)).toBe('x is in $[0, 1]$ and $$A = [1, 2]$$.');
+  });
   it('keeps markdown links and LaTeX brackets', () => {
     const s = 'see [docs](http://a.lk) and $[a,b]$';
     expect(stripCitations(s)).toBe(s);
