@@ -74,6 +74,19 @@ create table if not exists chat_logs (
 );
 create index if not exists chat_logs_user_time_idx on chat_logs (user_id, created_at);
 
+create table if not exists conversations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles on delete cascade,
+  title text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists conversations_user_updated_idx on conversations (user_id, updated_at desc);
+
+-- set null, not cascade: deleting a chat must not lower the daily count or hide logs from admins.
+alter table chat_logs add column if not exists conversation_id uuid references conversations on delete set null;
+create index if not exists chat_logs_conv_time_idx on chat_logs (conversation_id, created_at);
+
 -- The app talks to Postgres directly (bypasses RLS). RLS with no policies blocks the public Data API.
 alter table profiles enable row level security;
 alter table subjects enable row level security;
@@ -82,6 +95,7 @@ alter table documents enable row level security;
 alter table pages enable row level security;
 alter table chunks enable row level security;
 alter table chat_logs enable row level security;
+alter table conversations enable row level security;
 
 -- Create a profile for every new auth user.
 create or replace function public.handle_new_user() returns trigger
