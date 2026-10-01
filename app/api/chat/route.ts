@@ -3,6 +3,8 @@ import { sql, isUuid } from '@/lib/db';
 import { retrieve, buildUserMessage } from '@/lib/retrieval';
 import { generateAnswer } from '@/lib/gemini';
 import { answerSystemPrompt, NOT_FOUND, FALLBACK } from '@/lib/prompts';
+import { createConversation, ownsConversation, getHistory, logTurn, toSource } from '@/lib/conversations';
+import { titleFrom } from '@/lib/text';
 
 export const maxDuration = 60;
 const DAILY_LIMIT = 100;
@@ -15,7 +17,11 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const subjectId = body?.subjectId;
   const question = typeof body?.question === 'string' ? body.question.trim() : '';
+  const givenConvId = body?.conversationId ?? null;
   if (!isUuid(subjectId) || !question || question.length > 1000) return new Response('Bad request', { status: 400 });
+  if (givenConvId !== null && !isUuid(givenConvId)) return new Response('Bad request', { status: 400 });
+  // Same 404 for "not yours" and "doesn't exist", before any Gemini call.
+  if (givenConvId && !(await ownsConversation(user.id, givenConvId))) return new Response('Not found', { status: 404 });
 
   const [{ n }] = await sql<{ n: number }[]>`
     select count(*)::int as n from chat_logs
@@ -23,32 +29,30 @@ export async function POST(req: Request) {
       and created_at >= (date_trunc('day', now() at time zone 'Asia/Colombo') at time zone 'Asia/Colombo')`;
   if (n >= DAILY_LIMIT) return new Response('Daily limit reached', { status: 429 });
 
-  const log = (answer: string, chunkIds: string[]) => sql`
-    insert into chat_logs (user_id, subject_id, question, answer, chunk_ids)
-    values (${user.id}, ${subjectId}, ${question}, ${answer}, ${sql.array(chunkIds)}::uuid[])`;
+  const conversationId: string = givenConvId ?? (await createConversation(user.id, titleFrom(question)));
+  const log = (answer: string, chunkIds: string[]) =>
+    logTurn({ userId: user.id, subjectId, conversationId, question, answer, chunkIds });
 
   const enc = new TextEncoder();
   const stream = new ReadableStream({
     async start(ctl) {
       const send = (o: object) => ctl.enqueue(enc.encode(JSON.stringify(o) + '\n'));
       try {
-        const { replyLang, hits } = await retrieve(subjectId, question);
+        if (!givenConvId) send({ type: 'conversation', id: conversationId });
+        // A history load failure fails the request: never silently answer a follow-up without memory.
+        const history = givenConvId ? await getHistory(conversationId) : [];
+        const { replyLang, hits } = await retrieve(subjectId, question, history);
         if ((hits[0]?.similarity ?? 0) < MIN_SIMILARITY) {
           send({ type: 'text', text: NOT_FOUND[replyLang] });
           await log(NOT_FOUND[replyLang], []);
           return;
         }
-        send({
-          type: 'sources',
-          sources: hits.map((h, i) => ({
-            n: i + 1, documentId: h.document_id, title: h.title, unitSi: h.unit_si, unitEn: h.unit_en, page: h.page_no,
-          })),
-        });
+        send({ type: 'sources', sources: hits.map((h, i) => toSource(i + 1, h)) });
 
         let answer = '';
         for (let attempt = 0; ; attempt++) {
           try {
-            for await (const t of generateAnswer(answerSystemPrompt(replyLang), buildUserMessage(hits, question))) {
+            for await (const t of generateAnswer(answerSystemPrompt(replyLang), buildUserMessage(hits, question), history)) {
               answer += t;
               send({ type: 'text', text: t });
             }

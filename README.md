@@ -42,3 +42,11 @@ Design: `docs/superpowers/specs/2026-09-26-rag-chatbot-design.md` · Plan: `docs
 - Supabase's Free plan limits uploads to 50 MB per file; the app allows up to 200 MB (Pro plan).
 - Admin workflow: **Subjects** (add subject + units) → **Documents** (upload) → open the document to review OCR
   text, assign unit page ranges, then **Publish**. Only published documents are searched.
+
+### Chat history and memory
+
+- Each chat is saved as a conversation (`conversations` table; turns stay in `chat_logs.conversation_id`). `/chat` starts a new one, `/chat/<id>` reopens one.
+- Follow-ups use the last 4 turns, both when rewriting the question for retrieval and when answering. Citation numbers are stripped from past answers before they are sent to the model.
+- Deleting a chat only unlinks its `chat_logs` rows (`on delete set null`), so the daily limit and admin logs are unaffected.
+- After pulling this change, run `npm run db:migrate`.
+- `eval/questions.json` entries may include `"history": [{ "question": "...", "answer": "..." }]` to evaluate follow-up retrieval.

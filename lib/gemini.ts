@@ -1,6 +1,7 @@
 import dns from 'node:dns';
 import { GoogleGenAI, Type } from '@google/genai';
 import { OCR_PROMPT, REWRITE_PROMPT } from '@/lib/prompts';
+import { historyBlock, type Turn } from '@/lib/text';
 
 // Some Sri Lankan ISPs advertise broken IPv6 routes; Google calls then time out after 10 s.
 dns.setDefaultResultOrder('ipv4first');
@@ -67,12 +68,30 @@ export async function embed(
   return out;
 }
 
-export async function rewriteQuestion(q: string): Promise<{ query_si: string; query_en: string; reply_lang: 'si' | 'en' }> {
+/** Rewrite input: earlier turns (if any) only help resolve references like "it" or "that". */
+export const rewriteContents = (q: string, history: Turn[] = []) =>
+  history.length ? `${historyBlock(history)}
+
+Question: ${q}` : q;
+
+/** Answer input: past turns as real chat turns, then the message holding this turn's sources. */
+export const answerContents = (user: string, history: Turn[] = []) => [
+  ...history.flatMap((t) => [
+    { role: 'user' as const, parts: [{ text: t.question }] },
+    { role: 'model' as const, parts: [{ text: t.answer }] },
+  ]),
+  { role: 'user' as const, parts: [{ text: user }] },
+];
+
+export async function rewriteQuestion(
+  q: string,
+  history: Turn[] = [],
+): Promise<{ query_si: string; query_en: string; reply_lang: 'si' | 'en' }> {
   const chatModel = model('GEMINI_CHAT_MODEL');
   const res = await withRetry(() =>
     ai().models.generateContent({
       model: chatModel,
-      contents: q,
+      contents: rewriteContents(q, history),
       config: {
         systemInstruction: REWRITE_PROMPT,
         responseMimeType: 'application/json',
@@ -92,10 +111,10 @@ export async function rewriteQuestion(q: string): Promise<{ query_si: string; qu
 }
 
 /** Streams answer text. The single place to change if the chat provider changes. */
-export async function* generateAnswer(system: string, user: string): AsyncGenerator<string> {
+export async function* generateAnswer(system: string, user: string, history: Turn[] = []): AsyncGenerator<string> {
   const stream = await ai().models.generateContentStream({
     model: model('GEMINI_CHAT_MODEL'),
-    contents: user,
+    contents: answerContents(user, history),
     config: { systemInstruction: system },
   });
   for await (const chunk of stream) if (chunk.text) yield chunk.text;
