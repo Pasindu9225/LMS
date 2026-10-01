@@ -1,6 +1,6 @@
 import { sql, toVector } from '@/lib/db';
 import { embed, rewriteQuestion } from '@/lib/gemini';
-import { mergeResults } from '@/lib/text';
+import { mergeResults, type Turn } from '@/lib/text';
 
 const TOP_K = 8;
 
@@ -22,9 +22,9 @@ function search(subjectId: string, v: number[]) {
     limit ${TOP_K}`;
 }
 
-/** Rewrite (si + en), embed both, search the subject's live docs, merge. Not threshold-filtered. */
-export async function retrieve(subjectId: string, question: string) {
-  const r = await rewriteQuestion(question);
+/** Rewrite (si + en, resolving references against history), embed both, search the subject's live docs, merge. Not threshold-filtered. */
+export async function retrieve(subjectId: string, question: string, history: Turn[] = []) {
+  const r = await rewriteQuestion(question, history);
   const [vSi, vEn] = await embed([r.query_si, r.query_en], 'RETRIEVAL_QUERY');
   const [a, b] = await Promise.all([search(subjectId, vSi), search(subjectId, vEn)]);
   return { replyLang: r.reply_lang === 'en' ? 'en' as const : 'si' as const, hits: mergeResults([[...a], [...b]], TOP_K) };

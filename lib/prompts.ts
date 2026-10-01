@@ -15,6 +15,7 @@ Return JSON with:
 - query_si: the question rewritten as clear Unicode Sinhala, keeping technical terms.
 - query_en: the same question in clear English, using standard English technical terms.
 - reply_lang: "en" if the student wrote in English; otherwise "si" (Sinhala and Singlish both → "si").
+If a <history> block of earlier turns comes before the question, use it only to resolve references (it, that, එය, ඒක, an omitted topic) so query_si and query_en make sense on their own. reply_lang depends only on the latest question.
 Do not answer the question.`;
 
 export const answerSystemPrompt = (lang: 'si' | 'en') => `You are a patient tutor for Sri Lankan G.C.E. Advanced Level students.

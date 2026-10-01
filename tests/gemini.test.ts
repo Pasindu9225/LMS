@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { withRetry, embed } from '@/lib/gemini';
+import { withRetry, embed, rewriteContents, answerContents } from '@/lib/gemini';
 
 const apiError = (status?: number) => Object.assign(new Error(`status ${status}`), { status });
 
@@ -36,5 +36,28 @@ describe('withRetry', () => {
 describe('embed', () => {
   it('returns [] for no texts without calling the API', async () => {
     expect(await embed([], 'RETRIEVAL_DOCUMENT')).toEqual([]);
+  });
+});
+
+describe('rewriteContents', () => {
+  it('is just the question without history', () => {
+    expect(rewriteContents('What is a mole?')).toBe('What is a mole?');
+  });
+  it('puts the history block before the question', () => {
+    expect(rewriteContents('its uses?', [{ question: 'What is a mole?', answer: 'A unit.' }]))
+      .toBe('<history>\nStudent: What is a mole?\nTutor: A unit.\n</history>\n\nQuestion: its uses?');
+  });
+});
+
+describe('answerContents', () => {
+  it('sends only the user message without history', () => {
+    expect(answerContents('U')).toEqual([{ role: 'user', parts: [{ text: 'U' }] }]);
+  });
+  it('sends past turns as alternating user/model turns before the user message', () => {
+    expect(answerContents('U', [{ question: 'Q1', answer: 'A1' }])).toEqual([
+      { role: 'user', parts: [{ text: 'Q1' }] },
+      { role: 'model', parts: [{ text: 'A1' }] },
+      { role: 'user', parts: [{ text: 'U' }] },
+    ]);
   });
 });

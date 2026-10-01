@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { sql } from '@/lib/db';
 import { retrieve } from '@/lib/retrieval';
+import { buildHistory, type Turn } from '@/lib/text';
 
-type Q = { subjectId: string; question: string; documentId?: string; page?: number; offSyllabus?: boolean };
+type Q = { subjectId: string; question: string; history?: Turn[]; documentId?: string; page?: number; offSyllabus?: boolean };
 
 async function main() {
   const file = process.argv[2] ?? 'eval/questions.json';
@@ -12,7 +13,7 @@ async function main() {
   let hits = 0;
 
   for (const q of qs) {
-    const { hits: found } = await retrieve(q.subjectId, q.question);
+    const { hits: found } = await retrieve(q.subjectId, q.question, buildHistory(q.history ?? []));
     const best = found[0]?.similarity ?? 0;
     if (q.offSyllabus) {
       off.push(best);
