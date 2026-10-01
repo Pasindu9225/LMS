@@ -65,3 +65,29 @@ export function linkCitations(md: string, count: number): string {
     return ns.map((n) => `[[${n}]](#src-${n})`).join('');
   });
 }
+
+export type Turn = { question: string; answer: string };
+export const HISTORY_TURNS = 4;
+const HISTORY_ANSWER_MAX = 1500;
+
+/** Remove `[n]` / `[n, m]` citation markers and the space before them; markdown links stay. */
+export const stripCitations = (md: string) => md.replace(/ ?\[\d+(?:\s*,\s*\d+)*\](?!\()/g, '');
+
+/**
+ * Model-ready history from turns ordered oldest first: the last HISTORY_TURNS turns, citations
+ * stripped (their numbers referred to that turn's sources), answers capped.
+ */
+export const buildHistory = (turns: Turn[]): Turn[] =>
+  turns.slice(-HISTORY_TURNS).map((t) => ({
+    question: t.question,
+    answer: stripCitations(t.answer).slice(0, HISTORY_ANSWER_MAX),
+  }));
+
+export const historyBlock = (history: Turn[]) =>
+  `<history>\n${history.map((t) => `Student: ${t.question}\nTutor: ${t.answer}`).join('\n\n')}\n</history>`;
+
+/** Conversation title: first 80 code points, so Sinhala is never split mid-character. */
+export const titleFrom = (question: string) => Array.from(question.replace(/\s+/g, ' ').trim()).slice(0, 80).join('');
+
+/** YYYY-MM-DD in Sri Lanka time (UTC+5:30, no DST). Identical on server and client, so no hydration mismatch. */
+export const colomboDate = (iso: string) => new Date(Date.parse(iso) + 5.5 * 3600e3).toISOString().slice(0, 10);
