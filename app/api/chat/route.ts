@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         const { replyLang, hits } = await retrieve(subjectId, question, history);
         if ((hits[0]?.similarity ?? 0) < MIN_SIMILARITY) {
           send({ type: 'text', text: NOT_FOUND[replyLang] });
-          await log(NOT_FOUND[replyLang], []);
+          send({ type: 'logged', id: await log(NOT_FOUND[replyLang], []) });
           return;
         }
         send({ type: 'sources', sources: hits.map((h, i) => toSource(i + 1, h)) });
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
           answer = FALLBACK[replyLang];
           send({ type: 'text', text: answer });
         }
-        await log(answer, hits.map((h) => h.id));
+        send({ type: 'logged', id: await log(answer, hits.map((h) => h.id)) });
       } catch (e) {
         console.error('chat failed', e);
         send({ type: 'error' });

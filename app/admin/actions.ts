@@ -5,6 +5,8 @@ import { sql, isUuid, asUser } from '@/lib/db';
 import { storage, pagePath } from '@/lib/storage';
 import { ocrPage } from '@/lib/gemini';
 import { indexPages } from '@/lib/indexing';
+import { replyFlag, dismissFlag } from '@/lib/flags';
+import { cleanReply } from '@/lib/text';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
 function need(ok: unknown, msg: string): asserts ok {
@@ -151,4 +153,22 @@ export async function setUnitRange(documentId: string, from: number, to: number,
     where document_id = ${documentId} and page_no between ${from} and ${to} returning page_no`);
   await indexPages(documentId, rows.map((r) => r.page_no));
   revalidatePath(`/admin/documents/${documentId}`);
+}
+
+// ── Flags ────────────────────────────────────────────────────────
+export async function replyToFlag(fd: FormData) {
+  const admin = await requireAdmin();
+  const id = str(fd, 'id'), reply = cleanReply(fd.get('reply'));
+  need(isUuid(id), 'Bad id');
+  need(reply, 'Write a reply (up to 4000 characters)');
+  need(await replyFlag(admin.id, id, reply), 'Flag is not open');
+  revalidatePath('/admin/flags');
+}
+
+export async function dismissFlagAction(fd: FormData) {
+  const admin = await requireAdmin();
+  const id = str(fd, 'id');
+  need(isUuid(id), 'Bad id');
+  need(await dismissFlag(admin.id, id), 'Flag is not open');
+  revalidatePath('/admin/flags');
 }

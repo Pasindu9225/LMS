@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { chunkPage, mergeResults, linkCitations, stripCitations, buildHistory, historyBlock, titleFrom, colomboDate } from '@/lib/text';
+import { chunkPage, mergeResults, linkCitations, stripCitations, buildHistory, historyBlock, titleFrom, colomboDate, flagView, cleanNote, cleanReply } from '@/lib/text';
 
 const squash = (s: string) => s.replace(/\s+/g, '');
 
@@ -119,5 +119,41 @@ describe('colomboDate', () => {
   it('uses Sri Lanka time (UTC+5:30)', () => {
     expect(colomboDate('2026-10-01T20:00:00.000Z')).toBe('2026-10-02');
     expect(colomboDate('2026-10-01T18:00:00.000Z')).toBe('2026-10-01');
+  });
+});
+
+describe('flagView', () => {
+  it('has no flag button until the answer is logged', () => {
+    expect(flagView({})).toBe('none');
+  });
+  it('maps flag status to what the student sees', () => {
+    expect(flagView({ logId: 'x' })).toBe('can-flag');
+    expect(flagView({ logId: 'x', flagStatus: null })).toBe('can-flag');
+    expect(flagView({ logId: 'x', flagStatus: 'open' })).toBe('waiting');
+    expect(flagView({ logId: 'x', flagStatus: 'answered' })).toBe('reply');
+    expect(flagView({ logId: 'x', flagStatus: 'dismissed' })).toBe('reviewed');
+  });
+});
+
+describe('cleanNote', () => {
+  it('trims and allows empty', () => {
+    expect(cleanNote('  why?  ')).toBe('why?');
+    expect(cleanNote('   ')).toBe('');
+  });
+  it('rejects non-strings and notes over 500 chars', () => {
+    expect(cleanNote(undefined)).toBeNull();
+    expect(cleanNote('a'.repeat(501))).toBeNull();
+    expect(cleanNote('a'.repeat(500))).toBe('a'.repeat(500));
+  });
+});
+
+describe('cleanReply', () => {
+  it('trims', () => {
+    expect(cleanReply('  See page 12. ')).toBe('See page 12.');
+  });
+  it('rejects empty, non-strings and replies over 4000 chars', () => {
+    expect(cleanReply('   ')).toBeNull();
+    expect(cleanReply(42)).toBeNull();
+    expect(cleanReply('a'.repeat(4001))).toBeNull();
   });
 });

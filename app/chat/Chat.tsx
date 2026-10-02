@@ -5,18 +5,21 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { linkCitations, titleFrom, colomboDate } from '@/lib/text';
+import { linkCitations, titleFrom, colomboDate, flagView, type FlagStatus } from '@/lib/text';
 import { t, type Lang } from '@/lib/i18n';
 import type { Source, StoredTurn, ConversationItem } from '@/lib/conversations';
-import { deleteChat } from './actions';
+import { deleteChat, flagChat, markSeen } from './actions';
 
 type Subject = { id: string; name_si: string; name_en: string };
-type Msg = { role: 'user' | 'bot'; text: string; sources: (Source | null)[]; subjectId: string | null };
+type Msg = {
+  role: 'user' | 'bot'; text: string; sources: (Source | null)[]; subjectId: string | null;
+  logId?: string; flagStatus?: FlagStatus | null; reply?: string | null; repliedAt?: string | null;
+};
 
 const pdfUrl = (s: Source) => `/api/pdf/${s.documentId}?page=${s.page}`;
 const toMsgs = (turns: StoredTurn[]): Msg[] => turns.flatMap((x) => [
   { role: 'user' as const, text: x.question, sources: [], subjectId: x.subjectId },
-  { role: 'bot' as const, text: x.answer, sources: x.sources, subjectId: x.subjectId },
+  { role: 'bot' as const, text: x.answer, sources: x.sources, subjectId: x.subjectId, logId: x.id, flagStatus: x.flagStatus, reply: x.reply, repliedAt: x.repliedAt },
 ]);
 // Full page load, not client navigation: after replaceState the router still holds the
 // /chat tree, so a soft navigation to /chat would keep the old messages on screen.
@@ -66,9 +69,16 @@ export default function Chat({ subjects, conversations, conversationId, initialT
 
   const inFlight = useRef(false);
 
+  // Mount only: these are the replies this screen shows. A later router.refresh() brings new
+  // props that useState ignores, so marking from props there would hide replies never displayed.
+  useEffect(() => {
+    const ids = initialTurns.filter((x) => x.flagStatus === 'answered').map((x) => x.id);
+    if (ids.length) markSeen(ids).catch(() => { /* the dot simply stays until next time */ });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Move a conversation to the top of the sidebar, adding it if new.
   const touch = (id: string, title: string) => setConvs((cs) => [
-    { id, title: cs.find((c) => c.id === id)?.title ?? title, updatedAt: new Date().toISOString() },
+    { id, title: cs.find((c) => c.id === id)?.title ?? title, updatedAt: new Date().toISOString(), hasNewReply: false },
     ...cs.filter((c) => c.id !== id),
   ]);
 
@@ -117,6 +127,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
             window.history.replaceState(null, '', `/chat/${ev.id}`); // no remount mid-stream
           } else if (ev.type === 'sources') updateBot((m) => ({ ...m, sources: ev.sources }));
           else if (ev.type === 'text') updateBot((m) => ({ ...m, text: m.text + ev.text }));
+          else if (ev.type === 'logged') updateBot((m) => ({ ...m, logId: ev.id }));
           else if (ev.type === 'error') updateBot((m) => ({ ...m, text: (m.text ? m.text + '\n\n' : '') + L.error }));
         }
       }
@@ -158,7 +169,12 @@ export default function Chat({ subjects, conversations, conversationId, initialT
                 href={`/chat/${c.id}`} prefetch={false} onClick={() => setShowHistory(false)}
                 className="min-w-0 flex-1 p-2 text-sm"
               >
-                <span className="block truncate">{c.title}</span>
+                <span className="flex items-center gap-1">
+                  <span className="truncate">{c.title}</span>
+                  {c.hasNewReply && c.id !== convId && (
+                    <span role="img" aria-label={L.teacherReply} className="h-2 w-2 shrink-0 rounded-full bg-blue-600" />
+                  )}
+                </span>
                 <span className="text-xs text-gray-500">{colomboDate(c.updatedAt)}</span>
               </Link>
               <button
@@ -227,6 +243,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
                   </ol>
                 </div>
               )}
+              <FlagBox m={m} L={L} onSent={() => setMsgs((ms) => ms.map((x, j) => (j === i ? { ...x, flagStatus: 'open' } : x)))} />
             </div>
           ))}
           <div ref={endRef} />
@@ -242,5 +259,51 @@ export default function Chat({ subjects, conversations, conversationId, initialT
         </form>
       </div>
     </div>
+  );
+}
+
+/** Under each saved answer: "Ask a teacher", then waiting / the teacher's reply / reviewed. */
+function FlagBox({ m, L, onSent }: { m: Msg; L: (typeof t)[Lang]; onSent: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<'idle' | 'sending' | 'already' | 'error'>('idle');
+  const view = flagView(m);
+
+  async function send(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const note = String(new FormData(e.currentTarget).get('note') ?? '');
+    setState('sending');
+    try {
+      if (await flagChat(m.logId!, note)) onSent();
+      else setState('already');
+    } catch {
+      setState('error');
+    }
+  }
+
+  if (view === 'none') return null;
+  if (view === 'waiting') return <p className="mt-2 text-xs text-gray-500">{L.flagWaiting}</p>;
+  if (view === 'reviewed') return <p className="mt-2 text-xs text-gray-500">{L.flagReviewed}</p>;
+  if (view === 'reply') return (
+    <div className="mt-3 rounded border-l-4 border-amber-500 bg-amber-50 p-2 text-sm">
+      <p className="mb-1 text-xs font-semibold text-amber-800">
+        {L.teacherReply}{m.repliedAt && ` · ${colomboDate(m.repliedAt)}`}
+      </p>
+      {/* Plain text on purpose: admin replies are never rendered as markdown/HTML. */}
+      <p className="whitespace-pre-wrap">{m.reply}</p>
+    </div>
+  );
+  if (state === 'already') return <p className="mt-2 text-xs text-gray-500">{L.flagSent}</p>;
+  if (!open) return (
+    <button onClick={() => setOpen(true)} className="mt-2 text-xs text-gray-500 hover:text-blue-600">{L.flag}</button>
+  );
+  return (
+    <form onSubmit={send} className="mt-2 space-y-1">
+      <textarea name="note" maxLength={500} rows={2} placeholder={L.flagNote} className="w-full resize-none rounded border p-2 text-sm" />
+      <div className="flex items-center gap-2 text-sm">
+        <button disabled={state === 'sending'} className="rounded bg-blue-600 px-3 py-1 text-white disabled:opacity-50">{L.flagSend}</button>
+        <button type="button" onClick={() => setOpen(false)} className="px-2 text-gray-600">{L.flagCancel}</button>
+        {state === 'error' && <span className="text-red-600">{L.error}</span>}
+      </div>
+    </form>
   );
 }

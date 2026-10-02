@@ -94,3 +94,21 @@ export const titleFrom = (question: string) => Array.from(question.replace(/\s+/
 
 /** YYYY-MM-DD in Sri Lanka time (UTC+5:30, no DST). Identical on server and client, so no hydration mismatch. */
 export const colomboDate = (iso: string) => new Date(Date.parse(iso) + 5.5 * 3600e3).toISOString().slice(0, 10);
+
+export type FlagStatus = 'open' | 'answered' | 'dismissed';
+export type FlagView = 'none' | 'can-flag' | 'waiting' | 'reply' | 'reviewed';
+
+/** What the student sees under an answer. No logId = the answer was never saved, so it can't be flagged. */
+export function flagView(m: { logId?: string; flagStatus?: FlagStatus | null }): FlagView {
+  if (!m.logId) return 'none';
+  if (!m.flagStatus) return 'can-flag';
+  return ({ open: 'waiting', answered: 'reply', dismissed: 'reviewed' } as const)[m.flagStatus];
+}
+
+/** Student's optional flag note: trimmed, '' when empty, null when invalid. */
+export const cleanNote = (s: unknown): string | null =>
+  typeof s === 'string' && s.trim().length <= 500 ? s.trim() : null;
+
+/** Admin reply: trimmed, null when empty or invalid. */
+export const cleanReply = (s: unknown): string | null =>
+  typeof s === 'string' && s.trim() && s.trim().length <= 4000 ? s.trim() : null;
