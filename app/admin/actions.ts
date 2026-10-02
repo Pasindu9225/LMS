@@ -1,12 +1,14 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireStaff, requireSubject, requireDocument, requireLog } from '@/lib/auth';
 import { sql, isUuid, asUser } from '@/lib/db';
 import { storage, pagePath } from '@/lib/storage';
 import { ocrPage } from '@/lib/gemini';
 import { indexPages } from '@/lib/indexing';
 import { replyFlag, dismissFlag } from '@/lib/flags';
 import { cleanReply } from '@/lib/text';
+import { ROLES, type Role } from '@/lib/roles';
+import { setUserRole } from '@/lib/users';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
 function need(ok: unknown, msg: string): asserts ok {
@@ -60,7 +62,7 @@ export async function deleteUnit(fd: FormData) {
 const DOC_TYPES = ['textbook', 'past_paper', 'marking_scheme', 'syllabus', 'other'];
 
 export async function createUploadUrl() {
-  await requireAdmin();
+  await requireStaff();
   const path = `uploads/${crypto.randomUUID()}.pdf`;
   const { data, error } = await storage().createSignedUploadUrl(path);
   if (error) throw error;
@@ -70,15 +72,16 @@ export async function createUploadUrl() {
 export async function createDocument(input: {
   subjectId: string; title: string; docType: string; year: string; path: string;
 }) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
   const title = input.title.trim();
   const year = input.year ? Number(input.year) : null;
   need(isUuid(input.subjectId), 'Pick a subject');
+  await requireSubject(user, input.subjectId);
   need(title, 'Title is required');
   need(DOC_TYPES.includes(input.docType), 'Bad document type');
   need(year === null || (Number.isInteger(year) && year >= 1990 && year <= 2100), 'Bad year');
   need(/^uploads\/[0-9a-f-]{36}\.pdf$/.test(input.path), 'Bad upload path');
-  await asUser(admin.id, (tx) => tx`
+  await asUser(user.id, (tx) => tx`
     insert into documents (subject_id, title, doc_type, year, storage_path)
     values (${input.subjectId}, ${title}, ${input.docType}, ${year}, ${input.path})`);
   revalidatePath('/admin/documents');
@@ -88,10 +91,11 @@ export async function createDocument(input: {
 const TRANSITIONS = { live: ['review', 'archived'], archived: ['live', 'review'], queued: ['failed'] };
 
 export async function setDocumentStatus(id: string, status: keyof typeof TRANSITIONS) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
   need(isUuid(id), 'Bad id');
+  await requireDocument(user, id);
   need(status in TRANSITIONS, 'Bad status');
-  const r = await asUser(admin.id, (tx) => tx`
+  const r = await asUser(user.id, (tx) => tx`
     update documents set status = ${status}, error = null
     where id = ${id} and status = any(${sql.array(TRANSITIONS[status])})`);
   need(r.count === 1, `Cannot change status to ${status} from the current status`);
@@ -100,8 +104,9 @@ export async function setDocumentStatus(id: string, status: keyof typeof TRANSIT
 }
 
 export async function deleteDocument(id: string) {
-  await requireAdmin();
+  const user = await requireStaff();
   need(isUuid(id), 'Bad id');
+  await requireDocument(user, id);
   const [d] = await sql<{ storage_path: string; page_count: number }[]>`
     delete from documents where id = ${id} returning storage_path, page_count`;
   if (!d) return;
@@ -115,9 +120,10 @@ const pageArgs = (documentId: string, pageNo: number) =>
   need(isUuid(documentId) && Number.isInteger(pageNo) && pageNo >= 1, 'Bad page');
 
 export async function savePage(documentId: string, pageNo: number, text: string) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
   pageArgs(documentId, pageNo);
-  const r = await asUser(admin.id, (tx) => tx`
+  await requireDocument(user, documentId);
+  const r = await asUser(user.id, (tx) => tx`
     update pages set text = ${text}, reviewed = true, ocr_failed = false
     where document_id = ${documentId} and page_no = ${pageNo}`);
   need(r.count === 1, 'Page not found');
@@ -126,12 +132,13 @@ export async function savePage(documentId: string, pageNo: number, text: string)
 }
 
 export async function retryOcr(documentId: string, pageNo: number) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
   pageArgs(documentId, pageNo);
+  await requireDocument(user, documentId);
   const { data, error } = await storage().download(pagePath(documentId, pageNo));
   if (error) throw error;
   const text = await ocrPage(new Uint8Array(await data.arrayBuffer()));
-  await asUser(admin.id, (tx) => tx`
+  await asUser(user.id, (tx) => tx`
     update pages set text = ${text}, ocr_failed = false, reviewed = false
     where document_id = ${documentId} and page_no = ${pageNo}`);
   await indexPages(documentId, [pageNo]);
@@ -139,8 +146,9 @@ export async function retryOcr(documentId: string, pageNo: number) {
 }
 
 export async function setUnitRange(documentId: string, from: number, to: number, unitId: string | null) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
   need(isUuid(documentId) && Number.isInteger(from) && Number.isInteger(to) && from >= 1 && from <= to, 'Bad page range');
+  await requireDocument(user, documentId);
   need(unitId === null || isUuid(unitId), 'Bad unit');
   if (unitId) {
     const [ok] = await sql`
@@ -148,7 +156,7 @@ export async function setUnitRange(documentId: string, from: number, to: number,
       where u.id = ${unitId} and d.id = ${documentId}`;
     need(ok, 'Unit does not belong to this subject');
   }
-  const rows = await asUser(admin.id, (tx) => tx<{ page_no: number }[]>`
+  const rows = await asUser(user.id, (tx) => tx<{ page_no: number }[]>`
     update pages set unit_id = ${unitId}
     where document_id = ${documentId} and page_no between ${from} and ${to} returning page_no`);
   await indexPages(documentId, rows.map((r) => r.page_no));
@@ -157,18 +165,32 @@ export async function setUnitRange(documentId: string, from: number, to: number,
 
 // ── Flags ────────────────────────────────────────────────────────
 export async function replyToFlag(fd: FormData) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
   const id = str(fd, 'id'), reply = cleanReply(fd.get('reply'));
   need(isUuid(id), 'Bad id');
+  await requireLog(user, id);
   need(reply, 'Write a reply (up to 4000 characters)');
-  need(await replyFlag(admin.id, id, reply), 'Flag is not open');
+  need(await replyFlag(user.id, id, reply), 'Flag is not open');
   revalidatePath('/admin/flags');
 }
 
 export async function dismissFlagAction(fd: FormData) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
   const id = str(fd, 'id');
   need(isUuid(id), 'Bad id');
-  need(await dismissFlag(admin.id, id), 'Flag is not open');
+  await requireLog(user, id);
+  need(await dismissFlag(user.id, id), 'Flag is not open');
   revalidatePath('/admin/flags');
+}
+
+// ── Users ────────────────────────────────────────────────────────
+/** Returns '' on success or a message to show (thrown messages are hidden in production). */
+export async function saveUserRole(_prev: string, fd: FormData): Promise<string> {
+  const admin = await requireAdmin();
+  const id = str(fd, 'id'), role = str(fd, 'role') as Role;
+  const subjects = fd.getAll('subjects').map(String);
+  if (!isUuid(id) || !ROLES.includes(role) || !subjects.every(isUuid)) return 'Invalid input.';
+  const error = await setUserRole(admin.id, id, role, subjects);
+  if (!error) revalidatePath('/admin/users');
+  return error;
 }

@@ -57,3 +57,9 @@ Design: `docs/superpowers/specs/2026-09-26-rag-chatbot-design.md` · Plan: `docs
 - New production database: create an empty Supabase project, set `DATABASE_URL`, run `npm run db:migrate`.
 - Every table has `created_at`, `created_by`, `updated_at`, `updated_by`, set by the `audit_stamp` trigger. App writes go through `asUser(userId, tx => …)` (`lib/db.ts`) so the trigger knows who acted; worker and indexing writes record `null` (system).
 - Deletes are not recorded.
+
+### Roles
+
+- `admin`, `teacher`, `student`. Signup always creates a student; admins change roles and assign teacher subjects at `/admin/users`.
+- Teachers see documents, flags and chat logs for their assigned subjects only (`subjectScope` / `requireDocument` / `requireLog` in `lib/auth.ts`); Subjects and Users are admin-only.
+- First admin on a fresh database: sign up, then `npm run make-admin -- you@example.com`.

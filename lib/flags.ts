@@ -41,13 +41,14 @@ export type FlagRow = {
   reply: string | null; replied_at: Date | null; chunk_ids: string[]; student: string; subject: string | null;
 };
 
-/** Admin queue: open flags oldest first (first come, first served); others newest first. */
-export function listFlags(status: FlagStatus) {
+/** Staff queue: open flags oldest first (first come, first served); others newest first. scope null = all subjects. */
+export function listFlags(status: FlagStatus, scope: string[] | null) {
   const order = status === 'open' ? sql`l.flagged_at asc` : sql`l.flagged_at desc`;
   return sql<FlagRow[]>`
     select l.id, l.question, l.answer, l.flag_note, l.flagged_at, l.reply, l.replied_at, l.chunk_ids,
            p.name as student, s.name_en as subject
     from chat_logs l join profiles p on p.id = l.user_id left join subjects s on s.id = l.subject_id
     where l.flag_status = ${status}
+      and (${scope === null} or l.subject_id = any(${sql.array(scope ?? [])}::uuid[]))
     order by ${order} limit 100`;
 }

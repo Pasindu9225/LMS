@@ -11,7 +11,8 @@
     "worker": "tsx --env-file-if-exists=.env.local worker/index.ts",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
     "ocr-test": "tsx --env-file-if-exists=.env.local scripts/ocr-test.ts",
-    "eval": "tsx --env-file-if-exists=.env.local scripts/eval.ts"
+    "eval": "tsx --env-file-if-exists=.env.local scripts/eval.ts",
+    "make-admin": "tsx --env-file-if-exists=.env.local scripts/make-admin.ts"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",

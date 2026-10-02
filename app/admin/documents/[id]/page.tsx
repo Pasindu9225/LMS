@@ -1,13 +1,14 @@
 import { notFound } from 'next/navigation';
-import { requireAdmin } from '@/lib/auth';
+import { requireStaff, requireDocument } from '@/lib/auth';
 import { sql, isUuid } from '@/lib/db';
 import AutoRefresh from '@/app/admin/AutoRefresh';
 import Reviewer from './Reviewer';
 
 export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  const user = await requireStaff();
   const { id } = await params;
   if (!isUuid(id)) notFound();
+  await requireDocument(user, id);
   const [doc] = await sql<{
     id: string; title: string; status: string; error: string | null; subject_id: string;
     subject: string; page_count: number; pages_done: number;
