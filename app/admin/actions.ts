@@ -9,6 +9,7 @@ import { replyFlag, dismissFlag } from '@/lib/flags';
 import { cleanReply } from '@/lib/text';
 import { ROLES, type Role } from '@/lib/roles';
 import { setUserRole } from '@/lib/users';
+import { deleteSubjectIfUnused } from '@/lib/subjects';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
 function need(ok: unknown, msg: string): asserts ok {
@@ -28,11 +29,11 @@ export async function saveSubject(fd: FormData) {
 }
 
 export async function deleteSubject(fd: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const id = str(fd, 'id');
   need(isUuid(id), 'Bad id');
-  // The UI only offers delete for subjects without documents; the FK blocks it otherwise.
-  await sql`delete from subjects where id = ${id}`;
+  // The UI only offers delete for unused subjects; a subject that gained a document or class meanwhile is kept.
+  await deleteSubjectIfUnused(admin.id, id);
   revalidatePath('/admin/subjects');
 }
 
