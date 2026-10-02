@@ -1,30 +1,195 @@
 export type Lang = 'si' | 'en';
 
-export const t = {
-  si: {
-    title: 'A/L ගුරු සහායක', subject: 'විෂයය', placeholder: 'ඔබේ ප්‍රශ්නය මෙහි ලියන්න…', send: 'යවන්න',
-    sources: 'මූලාශ්‍ර', page: 'පිටුව', thinking: 'සිතමින්…', logout: 'ඉවත් වන්න',
-    error: 'දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.',
-    limit: 'අද දින ප්‍රශ්න සීමාව ඉක්මවා ඇත. හෙට නැවත උත්සාහ කරන්න.',
-    noSubjects: 'තවම විෂයයන් නොමැත.',
-    empty: 'විෂයයක් තෝරා ප්‍රශ්නයක් අසන්න. සිංහල, English හෝ Singlish භාවිතා කළ හැක.',
-    newChat: 'නව සංවාදය', history: 'ඉතිහාසය', delete: 'මකන්න',
-    confirmDelete: 'මෙම සංවාදය මකන්නද?', removed: 'ඉවත් කර ඇත',
-    flag: '⚑ ගුරුවරයාගෙන් අසන්න', flagNote: 'ගැටලුව කුමක්ද? (අත්‍යවශ්‍ය නැත)', flagSend: 'යවන්න', flagCancel: 'අවලංගු කරන්න',
+/** Fills {name} placeholders: fmt('Done {n}/{total}', { n: 1, total: 3 }). */
+export const fmt = (s: string, vars: Record<string, string | number>) =>
+  s.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+
+const si = {
+  common: {
+    brand: 'A/L ගුරු සහායක', brandShort: 'A/L ගුරු',
+    tutor: 'ගුරු සහායක', lessons: 'පාඩම්', classes: 'පන්ති', staffArea: 'කාර්ය මණ්ඩල අංශය', studentView: 'සිසු දර්ශනය',
+    logout: 'ඉවත් වන්න', language: 'භාෂාව', theme: 'තේමාව', themeSystem: 'උපාංගය', themeDark: 'අඳුරු', themeLight: 'ආලෝක',
+    account: 'ගිණුම', menu: 'මෙනුව', close: 'වසන්න', save: 'සුරකින්න', saved: 'සුරකින ලදී', cancel: 'අවලංගු කරන්න', delete: 'මකන්න',
+    edit: 'සංස්කරණය', open: 'විවෘත කරන්න', back: 'ආපසු', search: 'සොයන්න', none: 'කිසිවක් නැත', error: 'දෝෂයක් ඇති විය. නැවත උත්සාහ කරන්න.',
+    page: 'පිටුව', pages: 'පිටු', notFound: 'මෙම පිටුව සොයාගත නොහැක.', home: 'මුල් පිටුව', loading: 'පූරණය වෙමින්…',
+    breadcrumb: 'ස්ථානය', description: 'A/L අධ්‍යයන සහායක',
+  },
+  auth: {
+    login: 'පිවිසෙන්න', loginSub: 'ඔබේ ගිණුමට ඇතුළු වන්න', signup: 'ලියාපදිංචි වන්න', signupSub: 'නව සිසු ගිණුමක් සාදන්න',
+    name: 'නම', email: 'ඊමේල්', password: 'මුරපදය', passwordHint: 'අකුරු 8කට වැඩි',
+    noAccount: 'ගිණුමක් නැද්ද?', haveAccount: 'දැනටමත් ගිණුමක් තිබේද?', checkEmail: 'ඔබේ ගිණුම තහවුරු කිරීමට ඊමේල් පරීක්ෂා කරන්න.',
+  },
+  chat: {
+    newChat: 'නව සංවාදය', history: 'ඉතිහාසය', subject: 'විෂයය', placeholder: 'ඔබේ ප්‍රශ්නය මෙහි ලියන්න…', send: 'යවන්න',
+    sources: 'මූලාශ්‍ර', thinking: 'සිතමින්…', limit: 'අද දින ප්‍රශ්න සීමාව ඉක්මවා ඇත. හෙට නැවත උත්සාහ කරන්න.',
+    noSubjects: 'තවම විෂයයන් නොමැත.', empty: 'විෂයයක් තෝරා ප්‍රශ්නයක් අසන්න. සිංහල, English හෝ Singlish භාවිතා කළ හැක.',
+    emptyTitle: 'ඔබට උදව් කළ හැක්කේ කෙසේද?', confirmDelete: 'මෙම සංවාදය මකන්නද?', removed: 'ඉවත් කර ඇත', noChats: 'තවම සංවාද නැත.',
+    flag: 'ගුරුවරයාගෙන් අසන්න', flagNote: 'ගැටලුව කුමක්ද? (අත්‍යවශ්‍ය නැත)', flagSend: 'යවන්න',
     flagSent: 'දැනටමත් යවා ඇත', flagWaiting: 'ගුරුවරයාගේ පිළිතුර බලාපොරොත්තුවෙන්', teacherReply: 'ගුරුවරයාගේ පිළිතුර',
-    flagReviewed: 'ගුරුවරයෙකු විසින් සමාලෝචනය කරන ලදී', classes: 'පන්ති', lessons: 'පාඩම්',
+    flagReviewed: 'ගුරුවරයෙකු විසින් සමාලෝචනය කරන ලදී', newReply: 'නව පිළිතුරක්',
   },
-  en: {
-    title: 'A/L Tutor', subject: 'Subject', placeholder: 'Type your question…', send: 'Send',
-    sources: 'Sources', page: 'page', thinking: 'Thinking…', logout: 'Log out',
-    error: 'Something went wrong. Please try again.',
-    limit: "You've reached today's question limit. Try again tomorrow.",
-    noSubjects: 'No subjects yet.',
-    empty: 'Pick a subject and ask a question in Sinhala, English or Singlish.',
-    newChat: 'New chat', history: 'History', delete: 'Delete',
-    confirmDelete: 'Delete this conversation?', removed: 'removed',
-    flag: '⚑ Ask a teacher', flagNote: "What's wrong? (optional)", flagSend: 'Send', flagCancel: 'Cancel',
+  learn: {
+    title: 'පාඩම්', subtitle: 'විෂය අනුව පාඩම්, ප්‍රගතිය සහ පසුගිය ප්‍රශ්න පත්‍ර', noSubjects: 'තවම විෂයයන් නොමැත.',
+    progress: 'පාඩම් {done}/{total} සම්පූර්ණයි', unitDone: '{done}/{total} සම්පූර්ණයි', noLessons: 'තවම පාඩම් නැත.',
+    pastPapers: 'පසුගිය ප්‍රශ්න පත්‍ර', paper: 'ප්‍රශ්න පත්‍රය', scheme: 'ලකුණු දීමේ පටිපාටිය', year: 'වර්ෂය', noPapers: 'තවම නැත.',
+    textbook: 'පෙළපොත', pagesRange: 'පිටු {from}–{to}', pageOne: 'පිටුව {n}',
+    markDone: 'සම්පූර්ණ කළා', doneUndo: 'සම්පූර්ණයි — අහෝසි කරන්න', prev: 'පෙර', next: 'ඊළඟ', unit: 'ඒකකය',
+    isDone: 'සම්පූර්ණයි', notDone: 'සම්පූර්ණ කර නැත',
+  },
+  quiz: {
+    practice: 'පුහුණු ප්‍රශ්නාවලි', practiceSub: 'ඔබේ පොත් වලින් ප්‍රශ්න 5ක්', notAvailable: 'තවම නැත.',
+    quizMe: 'ප්‍රශ්නාවලිය', making: 'සකසමින්…', recent: 'මෑත', notSubmitted: 'ඉදිරිපත් කර නැත',
+    title: 'පුහුණු ප්‍රශ්නාවලිය', question: 'ප්‍රශ්නය {n}', submit: 'ඉදිරිපත් කරන්න', answerAll: 'සියලු ප්‍රශ්නවලට පිළිතුරු දෙන්න.',
+    alreadySubmitted: 'දැනටමත් ඉදිරිපත් කර ඇත.', correct: 'නිවැරදි පිළිතුර', yourAnswer: 'ඔබේ පිළිතුර', again: 'තවත් ප්‍රශ්නාවලියක්',
+    gotRight: 'නිවැරදියි', gotWrong: 'වැරදියි',
+    limit: 'අද ප්‍රශ්නාවලි 20 ඉක්මවා ඇත.', material: 'මෙම ඒකකයට තවම ප්‍රමාණවත් අන්තර්ගතයක් නැත.',
+    failed: 'ප්‍රශ්නාවලියක් සෑදිය නොහැකි විය, නැවත උත්සාහ කරන්න.', invalid: 'දෝෂයකි.', source: 'මූලාශ්‍රය',
+  },
+  classes: {
+    title: 'මගේ පන්ති', subtitle: 'ගුරුවරයාගෙන් ලැබුණු කේතයෙන් පන්තියකට එක් වන්න', code: 'පන්ති කේතය', join: 'එක් වන්න',
+    joined: 'පන්තියට එක් විය.', invalid: 'කේතය වැරදියි.', archived: 'මෙම පන්තිය වසා ඇත.', already: 'ඔබ දැනටමත් මෙම පන්තියේ සිටී.',
+    staff: 'සිසුන්ට පමණි.', none: 'ගුරුවරයාගෙන් පන්ති කේතයක් ලබාගන්න.', leave: 'ඉවත් වන්න', confirmLeave: '{name} පන්තියෙන් ඉවත් වන්නද?',
+    noPosts: 'තවම නිවේදන නැත.', teacher: 'ගුරුවරයා',
+  },
+  staff: {
+    admin: 'පරිපාලක', teacher: 'ගුරුවරයා', groupContent: 'අන්තර්ගතය', groupStudents: 'සිසුන්', groupAdmin: 'පරිපාලනය',
+    documents: 'ලේඛන', lessons: 'පාඩම්', subjects: 'විෂයයන්', flags: 'සලකුණු', classes: 'පන්ති', logs: 'සංවාද ලොග්', users: 'පරිශීලකයන්',
+    noSubjectsAssigned: 'තවම විෂයයන් පවරා නැත. පරිපාලකයාගෙන් විමසන්න.',
+    docsSub: 'ද්‍රව්‍ය උඩුගත කර, සමාලෝචනය කර, ප්‍රකාශයට පත් කරන්න', upload: 'PDF උඩුගත කරන්න', file: 'ගොනුව', title: 'මාතෘකාව',
+    type: 'වර්ගය', year: 'වර්ෂය', subject: 'විෂයය', status: 'තත්ත්වය', progress: 'ප්‍රගතිය', addSubjectFirst: 'පළමුව විෂයයක් එක් කරන්න.',
+    typeTextbook: 'පෙළපොත', typePastPaper: 'පසුගිය ප්‍රශ්න පත්‍රය', typeScheme: 'ලකුණු දීමේ පටිපාටිය', typeSyllabus: 'විෂය නිර්දේශය', typeOther: 'වෙනත්',
+    pdfOnly: 'PDF ගොනු පමණි.', tooBig: 'ගොනුව 200 MB ට වඩා විශාලයි.', uploading: 'උඩුගත කරමින්…',
+    uploaded: 'උඩුගත විය. තත්පර කිහිපයකින් සැකසීම ආරම්භ වේ.', uploadFailed: 'උඩුගත කිරීම අසාර්ථකයි: {msg}', noDocs: 'තවම ලේඛන නැත.',
+    publish: 'ප්‍රකාශ කරන්න', archive: 'සංරක්ෂණය', retryProcessing: 'නැවත සකසන්න', confirmDeleteDoc: 'මෙම ලේඛනය, එහි පිටු සහ කොටස් මකන්නද?',
+    processing: 'සකසමින්: පිටු {done}/{total}…', prevPage: 'පෙර', nextPage: 'ඊළඟ', pageN: 'පිටුව {n}', ocrFailed: 'OCR අසාර්ථකයි',
+    ocrFailedPage: 'මෙම පිටුවේ OCR අසාර්ථක විය.', openPage: 'පිටුව නව ටැබයක විවෘත කරන්න', savePage: 'පිටුව සුරකින්න', retryOcr: 'OCR නැවත',
+    assignPages: 'පිටු පවරන්න', to: 'සිට', noUnit: '(ඒකකයක් නැත)', apply: 'යොදන්න', unitOf: 'ඒකකය: {name}', done: 'නිමයි', failed: 'අසාර්ථකයි: {msg}',
+    subjectsSub: 'විෂයයන් සහ ඒකක කළමනාකරණය', nameSi: 'නම (සිංහල)', nameEn: 'නම (English)', addSubject: 'විෂයය එක් කරන්න',
+    addUnit: 'ඒකකය එක් කරන්න', order: '#', inUse: 'ලේඛන {docs} · පන්ති {classes} · පාඩම් {lessons}', unitInUse: 'පාඩම් {n}',
+    lessonsSub: 'ඒකක අනුව පාඩම් ලියන්න සහ ප්‍රකාශ කරන්න', newLesson: 'නව පාඩම', editLesson: 'පාඩම සංස්කරණය', published: 'ප්‍රකාශිතයි', draft: 'කෙටුම්පත',
+    noUnits: 'මෙම විෂයයට තවම ඒකක නැත. පරිපාලකයා විෂයයන් යටතේ ඒකක එක් කරයි.', allLessons: 'සියලු පාඩම්', viewAsStudent: 'සිසුවෙකු ලෙස බලන්න',
+    lessonTitle: 'පාඩමේ මාතෘකාව', unit: 'ඒකකය', position: 'ස්ථානය', notes: 'සටහන් (Markdown, LaTeX $…$)', preview: 'පෙරදසුන', nothingYet: 'තවම කිසිවක් නැත.',
+    video: 'YouTube වීඩියෝව', notYoutube: 'මෙය YouTube වීඩියෝ සබැඳියක් නොවේ.', textbookPages: 'පෙළපොත් පිටු', addPages: 'පිටු එක් කරන්න',
+    remove: 'ඉවත් කරන්න', notLive: '(තවම ප්‍රකාශ කර නැත)', uploadTextbookFirst: 'පිටු සම්බන්ධ කිරීමට ලේඛන යටතේ පෙළපොත උඩුගත කරන්න.',
+    publishedHint: 'ප්‍රකාශිතයි (සිසුන්ට පෙනේ)', deleteLesson: 'පාඩම මකන්න', confirmDeleteLesson: 'මෙම පාඩම මකන්නද? සිසුන්ගේ ප්‍රගතියද මැකේ.',
+    classesSub: 'පන්ති, සම්බන්ධ වීමේ කේත සහ නිවේදන', className: 'පන්තියේ නම', classNamePh: 'උදා. 2027 රසායනය – කොළඹ', batchYear: 'කණ්ඩායම් වර්ෂය',
+    createClass: 'පන්තිය සාදන්න', me: 'මම (පරිපාලක)', students: 'සිසුන්', noClasses: 'තවම පන්ති නැත.', archived: 'සංරක්ෂිත',
+    joinCode: 'සම්බන්ධ වීමේ කේතය', copy: 'පිටපත් කරන්න', copied: 'පිටපත් විය', regenerate: 'නව කේතයක්', regenerateHint: 'පැරණි කේතය අක්‍රීය වේ',
+    unarchive: 'නැවත විවෘත කරන්න', changeTeacher: 'ගුරුවරයා වෙනස් කරන්න', announcements: 'නිවේදන', post: 'පළ කරන්න', messagePh: 'පන්තියට පණිවිඩයක්',
+    noAnnouncements: 'තවම නිවේදන නැත.', joined: 'සම්බන්ධ විය', noStudents: 'තවම සිසුන් නැත. කේතය බෙදාගන්න.', confirmRemove: '{name} පන්තියෙන් ඉවත් කරන්නද?',
+    batch: 'කණ්ඩායම', teacherOf: 'ගුරුවරයා: {name}',
+    flagsSub: 'සිසුන් ගුරුවරයාට යැවූ පිළිතුරු', open: 'විවෘත', answered: 'පිළිතුරු දුන්', dismissed: 'ඉවත් කළ', noFlags: '{status} සලකුණු නැත.',
+    studentNote: 'සිසුවාගේ සටහන', replyPh: 'සිසුවාට පිළිතුර (ඔවුන්ගේ පිළිතුර යටතේ පෙන්වයි)', sendReply: 'පිළිතුර යවන්න', updateReply: 'පිළිතුර යාවත්කාලීන කරන්න',
+    replied: 'පිළිතුරු දුන්නේ {at}', dismiss: 'ඉවත් කරන්න', reply: 'පිළිතුර', chunkGone: '(කොටස නැවත සකසා ඇත)',
+    logsSub: 'සිසුන්ගේ මෑත ප්‍රශ්න සහ ලැබුණු මූලාශ්‍ර', flag: 'සලකුණ', noLogs: 'තවම ප්‍රශ්න නැත.',
+    usersSub: 'භූමිකා සහ ගුරුවරුන්ගේ විෂයයන්', searchPh: 'නම හෝ ඊමේල් සොයන්න', name: 'නම', email: 'ඊමේල්', joinedOn: 'සම්බන්ධ විය',
+    roleSubjects: 'භූමිකාව සහ විෂයයන්', teacherHint: 'ගුරුවරුන් සලකුණු කළ විෂයයන්හි ලේඛන, සලකුණු සහ ලොග් පමණක් කළමනාකරණය කරයි.',
+    noUsers: 'පරිශීලකයන් හමු නොවීය.', newer: 'අලුත්', older: 'පැරණි', roleAdmin: 'පරිපාලක', roleTeacher: 'ගුරුවරයා', roleStudent: 'සිසුවා',
+    fromPage: 'ආරම්භක පිටුව', toPage: 'අවසාන පිටුව',
+    statusQueued: 'පෝලිමේ', statusProcessing: 'සකසමින්', statusReview: 'සමාලෝචනය', statusLive: 'ප්‍රකාශිත', statusFailed: 'අසාර්ථක', statusArchived: 'සංරක්ෂිත',
+  },
+};
+
+type Dict = typeof si;
+type Shape<T> = { [K in keyof T]: T[K] extends string ? string : Shape<T[K]> };
+
+const en = {
+  common: {
+    brand: 'A/L Tutor', brandShort: 'A/L Tutor',
+    tutor: 'Tutor', lessons: 'Lessons', classes: 'Classes', staffArea: 'Staff area', studentView: 'Student view',
+    logout: 'Log out', language: 'Language', theme: 'Theme', themeSystem: 'System', themeDark: 'Dark', themeLight: 'Light',
+    account: 'Account', menu: 'Menu', close: 'Close', save: 'Save', saved: 'Saved', cancel: 'Cancel', delete: 'Delete',
+    edit: 'Edit', open: 'Open', back: 'Back', search: 'Search', none: 'None', error: 'Something went wrong. Please try again.',
+    page: 'page', pages: 'pages', notFound: 'This page could not be found.', home: 'Home', loading: 'Loading…',
+    breadcrumb: 'Breadcrumb', description: 'A/L study assistant',
+  },
+  auth: {
+    login: 'Log in', loginSub: 'Sign in to your account', signup: 'Sign up', signupSub: 'Create a new student account',
+    name: 'Name', email: 'Email', password: 'Password', passwordHint: 'At least 8 characters',
+    noAccount: 'No account yet?', haveAccount: 'Already have an account?', checkEmail: 'Check your email to confirm your account.',
+  },
+  chat: {
+    newChat: 'New chat', history: 'History', subject: 'Subject', placeholder: 'Type your question…', send: 'Send',
+    sources: 'Sources', thinking: 'Thinking…', limit: "You've reached today's question limit. Try again tomorrow.",
+    noSubjects: 'No subjects yet.', empty: 'Pick a subject and ask in Sinhala, English or Singlish.',
+    emptyTitle: 'How can I help?', confirmDelete: 'Delete this conversation?', removed: 'removed', noChats: 'No conversations yet.',
+    flag: 'Ask a teacher', flagNote: "What's wrong? (optional)", flagSend: 'Send',
     flagSent: 'Already sent', flagWaiting: "Waiting for a teacher's reply", teacherReply: "Teacher's reply",
-    flagReviewed: 'Reviewed by a teacher', classes: 'Classes', lessons: 'Lessons',
+    flagReviewed: 'Reviewed by a teacher', newReply: 'New reply',
   },
-} satisfies Record<Lang, Record<string, string>>;
+  learn: {
+    title: 'Lessons', subtitle: 'Lessons by subject, your progress and past papers', noSubjects: 'No subjects yet.',
+    progress: '{done}/{total} lessons done', unitDone: '{done}/{total} done', noLessons: 'No lessons yet.',
+    pastPapers: 'Past papers', paper: 'Paper', scheme: 'Marking scheme', year: 'Year', noPapers: 'None yet.',
+    textbook: 'Textbook', pagesRange: 'pages {from}–{to}', pageOne: 'page {n}',
+    markDone: 'Mark as done', doneUndo: 'Done — undo', prev: 'Previous', next: 'Next', unit: 'Unit',
+    isDone: 'Done', notDone: 'Not done',
+  },
+  quiz: {
+    practice: 'Practice quizzes', practiceSub: '5 questions from your textbooks', notAvailable: 'Not available yet.',
+    quizMe: 'Quiz me', making: 'Making your quiz…', recent: 'Recent', notSubmitted: 'not submitted',
+    title: 'Practice quiz', question: 'Question {n}', submit: 'Submit', answerAll: 'Answer every question.',
+    alreadySubmitted: 'Already submitted.', correct: 'Correct answer', yourAnswer: 'Your answer', again: 'Another quiz',
+    gotRight: 'Correct', gotWrong: 'Wrong',
+    limit: 'You have done 20 quizzes today.', material: 'Not enough material for this unit yet.',
+    failed: 'Couldn’t make a quiz, please try again.', invalid: 'Something went wrong.', source: 'Source',
+  },
+  classes: {
+    title: 'My classes', subtitle: 'Join a class with the code from your teacher', code: 'Class code', join: 'Join',
+    joined: 'Joined the class.', invalid: 'That code is not valid.', archived: 'This class is closed.', already: 'You are already in this class.',
+    staff: 'Only students can join classes.', none: 'Ask your teacher for a class code.', leave: 'Leave', confirmLeave: 'Leave {name}?',
+    noPosts: 'No announcements yet.', teacher: 'Teacher',
+  },
+  staff: {
+    admin: 'Admin', teacher: 'Teacher', groupContent: 'Content', groupStudents: 'Students', groupAdmin: 'Admin',
+    documents: 'Documents', lessons: 'Lessons', subjects: 'Subjects', flags: 'Flags', classes: 'Classes', logs: 'Chat logs', users: 'Users',
+    noSubjectsAssigned: 'No subjects assigned yet. Ask an admin.',
+    docsSub: 'Upload, review and publish material', upload: 'Upload PDF', file: 'File', title: 'Title',
+    type: 'Type', year: 'Year', subject: 'Subject', status: 'Status', progress: 'Progress', addSubjectFirst: 'Add a subject first.',
+    typeTextbook: 'Textbook', typePastPaper: 'Past paper', typeScheme: 'Marking scheme', typeSyllabus: 'Syllabus', typeOther: 'Other',
+    pdfOnly: 'Only PDF files are allowed.', tooBig: 'File is larger than 200 MB.', uploading: 'Uploading…',
+    uploaded: 'Uploaded. Processing starts within a few seconds.', uploadFailed: 'Upload failed: {msg}', noDocs: 'No documents yet.',
+    publish: 'Publish', archive: 'Archive', retryProcessing: 'Retry processing', confirmDeleteDoc: 'Delete this document, its pages and chunks?',
+    processing: 'Processing: {done}/{total} pages…', prevPage: 'Prev', nextPage: 'Next', pageN: 'Page {n}', ocrFailed: 'OCR failed',
+    ocrFailedPage: 'OCR failed for this page.', openPage: 'Open page in new tab', savePage: 'Save page', retryOcr: 'Retry OCR',
+    assignPages: 'Assign pages', to: 'to', noUnit: '(no unit)', apply: 'Apply', unitOf: 'Unit: {name}', done: 'done', failed: 'failed: {msg}',
+    subjectsSub: 'Manage subjects and their units', nameSi: 'Name (Sinhala)', nameEn: 'Name (English)', addSubject: 'Add subject',
+    addUnit: 'Add unit', order: '#', inUse: '{docs} documents · {classes} classes · {lessons} lessons', unitInUse: '{n} lessons',
+    lessonsSub: 'Write and publish lessons per unit', newLesson: 'New lesson', editLesson: 'Edit lesson', published: 'Published', draft: 'Draft',
+    noUnits: 'This subject has no units yet. Admins add units under Subjects.', allLessons: 'All lessons', viewAsStudent: 'View as student',
+    lessonTitle: 'Lesson title', unit: 'Unit', position: 'Position', notes: 'Notes (Markdown, LaTeX $…$)', preview: 'Preview', nothingYet: 'Nothing yet.',
+    video: 'YouTube video', notYoutube: 'Not a YouTube video link.', textbookPages: 'Textbook pages', addPages: 'Add pages',
+    remove: 'Remove', notLive: '(not live yet)', uploadTextbookFirst: 'Upload this subject’s textbook in Documents to link pages.',
+    publishedHint: 'Published (students can see it)', deleteLesson: 'Delete lesson', confirmDeleteLesson: 'Delete this lesson? Students’ progress on it is deleted too.',
+    classesSub: 'Classes, join codes and announcements', className: 'Class name', classNamePh: 'e.g. 2027 Chemistry – Colombo', batchYear: 'Batch year',
+    createClass: 'Create class', me: 'Me (admin)', students: 'Students', noClasses: 'No classes yet.', archived: 'Archived',
+    joinCode: 'Join code', copy: 'Copy', copied: 'Copied', regenerate: 'Regenerate', regenerateHint: 'The old code stops working',
+    unarchive: 'Unarchive', changeTeacher: 'Change teacher', announcements: 'Announcements', post: 'Post', messagePh: 'Message to the class',
+    noAnnouncements: 'No announcements yet.', joined: 'Joined', noStudents: 'No students yet. Share the join code.', confirmRemove: 'Remove {name} from this class?',
+    batch: 'Batch', teacherOf: 'Teacher: {name}',
+    flagsSub: 'Answers students sent to a teacher', open: 'Open', answered: 'Answered', dismissed: 'Dismissed', noFlags: 'No {status} flags.',
+    studentNote: 'Student note', replyPh: 'Reply to the student (shown under their answer)', sendReply: 'Send reply', updateReply: 'Update reply',
+    replied: 'Replied {at}', dismiss: 'Dismiss', reply: 'Reply', chunkGone: '(chunk since re-indexed)',
+    logsSub: 'Recent student questions and the sources they retrieved', flag: 'flag', noLogs: 'No questions yet.',
+    usersSub: 'Roles and teacher subjects', searchPh: 'Search name or email', name: 'Name', email: 'Email', joinedOn: 'Joined',
+    roleSubjects: 'Role & subjects', teacherHint: 'Teachers manage documents, flags and chat logs for the ticked subjects only.',
+    noUsers: 'No users found.', newer: 'Newer', older: 'Older', roleAdmin: 'Admin', roleTeacher: 'Teacher', roleStudent: 'Student',
+    fromPage: 'From page', toPage: 'To page',
+    statusQueued: 'queued', statusProcessing: 'processing', statusReview: 'review', statusLive: 'live', statusFailed: 'failed', statusArchived: 'archived',
+  },
+} satisfies Shape<Dict>;
+
+export const dict: Record<Lang, Dict> = { si, en };
+export type T = Dict;
+
+const statusKey = {
+  queued: 'statusQueued', processing: 'statusProcessing', review: 'statusReview',
+  live: 'statusLive', failed: 'statusFailed', archived: 'statusArchived',
+} as const;
+const typeKey = {
+  textbook: 'typeTextbook', past_paper: 'typePastPaper', marking_scheme: 'typeScheme', syllabus: 'typeSyllabus', other: 'typeOther',
+} as const;
+
+/** Translated document status / type (falls back to the raw value for anything unknown). */
+export const docStatus = (t: T, s: string) => (s in statusKey ? t.staff[statusKey[s as keyof typeof statusKey]] : s);
+export const docType = (t: T, s: string) => (s in typeKey ? t.staff[typeKey[s as keyof typeof typeKey]] : s);

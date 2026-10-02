@@ -1,5 +1,6 @@
 'use client';
 import { useActionState } from 'react';
+import { btn } from '@/app/ui/ui';
 
 type Action = (prev: string, fd: FormData) => Promise<string>;
 
@@ -11,8 +12,8 @@ export default function MessageForm({ action, submit, className, children }: {
   return (
     <form action={run} className={className}>
       {children}
-      <button disabled={pending} className="rounded bg-blue-600 px-3 py-1 text-sm text-white disabled:opacity-50">{submit}</button>
-      {error && <span role="alert" className="text-sm text-red-600">{error}</span>}
+      <button disabled={pending} className={btn('primary', 'sm')}>{submit}</button>
+      {error && <span role="alert" className="text-sm text-danger">{error}</span>}
     </form>
   );
 }

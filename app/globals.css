@@ -1,10 +1,124 @@
 @import "tailwindcss";
 
+/*
+ * "Mono precision" design tokens. Light is the default; dark applies when the user picks it
+ * (data-theme="dark") or when the device is dark and the user hasn't forced light.
+ * Pages use only these tokens (bg-surface, text-muted, border-border, bg-primary …).
+ */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --fg: #0a0a0b;
+  --muted: #52525b;
+  --subtle: #6b6b74;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --primary: #0a0a0b;
+  --primary-fg: #ffffff;
+  --accent: #4d7c0f;
+  --accent-soft: #ecfccb;
+  --accent-line: #c5e88d;
+  --danger: #b91c1c;
+  --danger-soft: #fef2f2;
+  --warn: #a16207;
+  --warn-soft: #fefce8;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #111113;
+  --surface-2: #18181b;
+  --fg: #ededef;
+  --muted: #a1a1aa;
+  --subtle: #8b8b93;
+  --border: #232327;
+  --border-strong: #2e2e33;
+  --primary: #a3e635;
+  --primary-fg: #0a0a0b;
+  --accent: #bef264;
+  --accent-soft: #a3e6351a;
+  --accent-line: #a3e63555;
+  --danger: #f87171;
+  --danger-soft: #f8717114;
+  --warn: #fbbf24;
+  --warn-soft: #fbbf2414;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface-2: #18181b;
+    --fg: #ededef;
+    --muted: #a1a1aa;
+    --subtle: #8b8b93;
+    --border: #232327;
+    --border-strong: #2e2e33;
+    --primary: #a3e635;
+    --primary-fg: #0a0a0b;
+    --accent: #bef264;
+    --accent-soft: #a3e6351a;
+    --accent-line: #a3e63555;
+    --danger: #f87171;
+    --danger-soft: #f8717114;
+    --warn: #fbbf24;
+    --warn-soft: #fbbf2414;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --font-sans: var(--font-inter), var(--font-sinhala), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-jb), ui-monospace, monospace;
+}
+
+/* The thin lime line under the top bar: the one decorative "futuristic" touch. */
+.accent-rule { background: linear-gradient(90deg, transparent, var(--accent), transparent); height: 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}
+
+/* In layers, so Tailwind utilities on the same element (no-underline, tracking-normal, text-sm) still win. */
+@layer components {
+/* Markdown (tutor answers, lessons, quizzes) */
+.md { line-height: 1.7; }
 .md p { margin: 0.5rem 0; }
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
 .md ul { list-style: disc; padding-left: 1.25rem; }
 .md ol { list-style: decimal; padding-left: 1.25rem; }
-.md h1, .md h2, .md h3 { font-weight: 600; margin: 0.75rem 0 0.25rem; }
+.md h1, .md h2, .md h3 { font-weight: 600; margin: 1rem 0 0.25rem; letter-spacing: -0.01em; }
+.md h1 { font-size: 1.25rem; } .md h2 { font-size: 1.125rem; }
+.md code { font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 4px; }
+.md blockquote { border-left: 2px solid var(--accent); padding-left: 0.75rem; color: var(--muted); }
 .md table { border-collapse: collapse; margin: 0.5rem 0; display: block; overflow-x: auto; }
-.md th, .md td { border: 1px solid #d1d5db; padding: 0.25rem 0.5rem; }
-.md a { color: #2563eb; }
+.md th, .md td { border: 1px solid var(--border-strong); padding: 0.25rem 0.5rem; }
+.md a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 .md .katex-display { overflow-x: auto; overflow-y: hidden; }
+
+/* Small caption labels: mono caps with letter-spacing in English. Sinhala letters must never be
+   spaced apart (it breaks conjuncts), so in Sinhala they use the normal font without tracking. */
+.caps { font-family: var(--font-mono); font-size: 11px; line-height: 1.4; text-transform: uppercase; letter-spacing: 0.12em; }
+:lang(si) .caps { font-family: var(--font-sans); font-size: 12px; text-transform: none; letter-spacing: 0; }
+}

@@ -3,15 +3,19 @@ import { useActionState, useState } from 'react';
 import Markdown from '@/app/Markdown';
 import { parseYouTubeId } from '@/lib/youtube';
 import type { PageRef, SubjectDoc } from '@/lib/lessons';
+import { useT } from '@/app/ui/prefs';
+import { Button, Card, Field, Icon, Input, Label, Notice, Select, Textarea, btn } from '@/app/ui/ui';
 import { saveLessonAction } from '../lesson-actions';
 
 type Lesson = { id: string; unit_id: string; title: string; body: string; youtube_id: string | null; sort_order: number; published: boolean };
-type Props = { units: { id: string; name_en: string }[]; docs: SubjectDoc[]; lesson: Lesson | null; pages: PageRef[]; unitId: string };
+type Props = { units: { id: string; name_en: string; name_si: string }[]; docs: SubjectDoc[]; lesson: Lesson | null; pages: PageRef[]; unitId: string };
 
-const input = 'rounded border p-1 text-sm';
+const small = 'min-h-9 py-1';
 
 /** Controlled fields, so nothing typed is lost when the server returns an error. */
 export default function LessonEditor({ units, docs, lesson, pages: initialPages, unitId }: Props) {
+  const { lang, t } = useT();
+  const S = t.staff;
   const [error, run, pending] = useActionState(saveLessonAction, '');
   const [title, setTitle] = useState(lesson?.title ?? '');
   const [unit, setUnit] = useState(lesson?.unit_id ?? unitId);
@@ -24,78 +28,79 @@ export default function LessonEditor({ units, docs, lesson, pages: initialPages,
   const setPage = (i: number, p: Partial<PageRef>) => setPages((ps) => ps.map((x, j) => (j === i ? { ...x, ...p } : x)));
 
   return (
-    <form action={run} className="space-y-3">
+    <form action={run} className="space-y-5">
       {lesson && <input type="hidden" name="id" value={lesson.id} />}
-      <div className="flex flex-wrap gap-2">
-        <input name="title" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={200} placeholder="Lesson title" className={`${input} min-w-64 flex-1`} />
-        <select name="unitId" value={unit} onChange={(e) => setUnit(e.target.value)} className={input} aria-label="Unit">
-          {units.map((u) => <option key={u.id} value={u.id}>{u.name_en}</option>)}
-        </select>
-        <label className="flex items-center gap-1 text-sm">Position
-          <input name="sortOrder" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className={`${input} w-20`} />
-        </label>
+      <div className="grid gap-3 sm:grid-cols-[1fr_14rem_7rem]">
+        <Field label={S.lessonTitle}><Input name="title" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={200} /></Field>
+        <Field label={S.unit}>
+          <Select name="unitId" value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full">
+            {units.map((u) => <option key={u.id} value={u.id}>{lang === 'si' ? u.name_si : u.name_en}</option>)}
+          </Select>
+        </Field>
+        <Field label={S.position}><Input name="sortOrder" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="font-mono" /></Field>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="space-y-1 text-sm">
-          <span className="font-medium">Notes (Markdown, LaTeX with $…$)</span>
-          <textarea name="body" value={body} onChange={(e) => setBody(e.target.value)} maxLength={50000} rows={18} className="w-full rounded border p-2 font-mono text-sm" />
-        </label>
-        <div className="space-y-1 text-sm">
-          <span className="font-medium">Preview</span>
-          <div className="h-[27rem] overflow-y-auto rounded border bg-white p-3">
-            {body ? <Markdown>{body}</Markdown> : <p className="text-gray-400">Nothing yet.</p>}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Field label={S.notes}>
+          <Textarea name="body" value={body} onChange={(e) => setBody(e.target.value)} maxLength={50000} rows={20} className="font-mono text-[13px] leading-relaxed" />
+        </Field>
+        <div className="space-y-1.5">
+          <Label>{S.preview}</Label>
+          <div className="h-[31.5rem] overflow-y-auto rounded-lg border border-border bg-surface px-4 py-3 text-[15px]">
+            {body ? <Markdown>{body}</Markdown> : <p className="text-subtle">{S.nothingYet}</p>}
           </div>
         </div>
       </div>
 
-      <div className="space-y-1 text-sm">
-        <label className="flex flex-wrap items-center gap-2">
-          <span className="font-medium">YouTube video</span>
-          <input name="video" value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://youtu.be/…" className={`${input} min-w-72 flex-1`} />
-        </label>
-        {video.trim() && !videoId && <p className="text-red-600">Not a YouTube video link.</p>}
-        {videoId && (
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${videoId}`} title="Video preview" className="aspect-video w-full max-w-md rounded"
-            allow="encrypted-media; picture-in-picture" allowFullScreen
-          />
-        )}
-      </div>
+      <Field label={S.video} error={video.trim() && !videoId ? S.notYoutube : undefined}>
+        <Input name="video" value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://youtu.be/…" className="font-mono text-[13px]" />
+      </Field>
+      {videoId && (
+        <div className="max-w-md overflow-hidden rounded-xl border border-border">
+          <iframe src={`https://www.youtube-nocookie.com/embed/${videoId}`} title={S.preview} className="aspect-video w-full" allow="encrypted-media; picture-in-picture" allowFullScreen />
+        </div>
+      )}
 
-      <fieldset className="space-y-2 text-sm">
-        <legend className="font-medium">Textbook pages</legend>
-        {pages.map((p, i) => {
-          const doc = docs.find((d) => d.id === p.documentId);
-          return (
-            <div key={i} className="flex flex-wrap items-center gap-2">
-              <select name="pageDoc" value={p.documentId} onChange={(e) => setPage(i, { documentId: e.target.value })} className={input} aria-label="Document">
-                {docs.map((d) => <option key={d.id} value={d.id}>{d.title}{d.status !== 'live' ? ' (not live yet)' : ''}</option>)}
-              </select>
-              <input
-                name="pageFrom" type="number" min={1} max={doc?.page_count || undefined} value={p.from}
-                onChange={(e) => setPage(i, { from: Number(e.target.value) })} className={`${input} w-20`} aria-label="From page"
-              />
-              <span>–</span>
-              <input
-                name="pageTo" type="number" min={1} max={doc?.page_count || undefined} value={p.to}
-                onChange={(e) => setPage(i, { to: Number(e.target.value) })} className={`${input} w-20`} aria-label="To page"
-              />
-              <button type="button" onClick={() => setPages((ps) => ps.filter((_, j) => j !== i))} className="text-gray-500 underline">Remove</button>
-            </div>
-          );
-        })}
-        {docs.length ? (
-          <button type="button" onClick={() => setPages((ps) => [...ps, { documentId: docs[0].id, from: 1, to: 1 }])} className="text-blue-600 underline">+ Add pages</button>
-        ) : <p className="text-gray-500">Upload this subject&apos;s textbook in Documents to link pages.</p>}
-      </fieldset>
+      <Card>
+        <fieldset className="space-y-2">
+          <legend className="caps mb-2 text-subtle">{S.textbookPages}</legend>
+          {pages.map((p, i) => {
+            const doc = docs.find((d) => d.id === p.documentId);
+            return (
+              <div key={i} className="flex flex-wrap items-center gap-2">
+                <Select name="pageDoc" value={p.documentId} onChange={(e) => setPage(i, { documentId: e.target.value })} className={small} aria-label={S.documents}>
+                  {docs.map((d) => <option key={d.id} value={d.id}>{d.title}{d.status !== 'live' ? ` ${S.notLive}` : ''}</option>)}
+                </Select>
+                <Input
+                  name="pageFrom" type="number" min={1} max={doc?.page_count || undefined} value={p.from}
+                  onChange={(e) => setPage(i, { from: Number(e.target.value) })} className={`${small} w-20 font-mono`} aria-label={S.fromPage}
+                />
+                <span className="text-subtle">–</span>
+                <Input
+                  name="pageTo" type="number" min={1} max={doc?.page_count || undefined} value={p.to}
+                  onChange={(e) => setPage(i, { to: Number(e.target.value) })} className={`${small} w-20 font-mono`} aria-label={S.toPage}
+                />
+                <button type="button" onClick={() => setPages((ps) => ps.filter((_, j) => j !== i))} className={btn('ghost', 'sm', 'hover:text-danger')} aria-label={S.remove}>
+                  <Icon name="x" />
+                </button>
+              </div>
+            );
+          })}
+          {docs.length ? (
+            <button type="button" onClick={() => setPages((ps) => [...ps, { documentId: docs[0].id, from: 1, to: 1 }])} className={btn('secondary', 'sm')}>
+              <Icon name="plus" /> {S.addPages}
+            </button>
+          ) : <p className="text-sm text-subtle">{S.uploadTextbookFirst}</p>}
+        </fieldset>
+      </Card>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-1 text-sm">
-          <input type="checkbox" name="published" checked={published} onChange={(e) => setPublished(e.target.checked)} /> Published (students can see it)
+      <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center gap-3 border-t border-border bg-bg/90 px-1 py-3 backdrop-blur">
+        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" name="published" checked={published} onChange={(e) => setPublished(e.target.checked)} className="size-4 accent-[var(--accent)]" />
+          {S.publishedHint}
         </label>
-        <button disabled={pending} className="rounded bg-blue-600 px-4 py-1 text-white disabled:opacity-50">Save</button>
-        {error && <span role="alert" className="text-sm text-red-600">{error}</span>}
+        <Button disabled={pending} className="ml-auto">{t.common.save}</Button>
+        {error && <div className="w-full"><Notice tone="danger">{error}</Notice></div>}
       </div>
     </form>
   );
