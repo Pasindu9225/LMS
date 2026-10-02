@@ -95,7 +95,7 @@ export default function Reviewer({ doc, pages, units }: { doc: Doc; pages: Page[
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
-              <iframe key={n} src={`/api/pdf/${doc.id}?page=${n}`} title={fmt(S.pageN, { n })} className="h-[70vh] w-full rounded-xl border border-border bg-surface-2" />
+              <iframe key={n} src={`/api/pdf/${doc.id}?page=${n}`} title={fmt(S.pageN, { n })} className="h-[70vh] w-full rounded-2xl border border-border bg-surface-2" />
               <a href={`/api/pdf/${doc.id}?page=${n}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-accent">
                 {S.openPage} <Icon name="external" className="size-3" />
               </a>

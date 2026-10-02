@@ -23,7 +23,7 @@ export default async function FlagsPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title={S.flags} description={S.flagsSub} />
-      <nav aria-label={S.status} className="mb-6 inline-flex rounded-lg border border-border bg-surface p-1">
+      <nav aria-label={S.status} className="mb-6 inline-flex rounded-xl border border-border bg-surface p-1">
         {STATUSES.map((s) => (
           <Link
             key={s} href={`/admin/flags?status=${s}`} aria-current={s === status ? 'page' : undefined}
@@ -38,9 +38,9 @@ export default async function FlagsPage({ searchParams }: { searchParams: Promis
           <Card key={f.id} className="space-y-3">
             <p className="font-mono text-xs text-subtle">{when(f.flagged_at)} · {f.student} · {(lang === 'si' ? f.subject_si : f.subject) ?? '—'}</p>
             <p className="font-medium">{f.question}</p>
-            <p className="whitespace-pre-wrap rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">{f.answer}</p>
+            <p className="whitespace-pre-wrap rounded-xl bg-surface-2 px-3 py-2 text-sm text-muted">{f.answer}</p>
             {f.flag_note && (
-              <div className="rounded-lg border-l-2 border-warn bg-warn-soft px-3 py-2 text-sm">
+              <div className="rounded-xl border-l-2 border-warn bg-warn-soft px-3 py-2 text-sm">
                 <Label className="mb-0.5">{S.studentNote}</Label>
                 <p className="whitespace-pre-wrap">{f.flag_note}</p>
               </div>

@@ -36,7 +36,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       </form>
       <p className="mb-4 text-xs text-subtle">{S.teacherHint}</p>
       {!users.length ? <Empty>{S.noUsers}</Empty> : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div className="overflow-x-auto rounded-2xl border border-border/70 bg-surface shadow-card">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border">

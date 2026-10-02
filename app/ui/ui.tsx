@@ -1,18 +1,18 @@
 import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
 
-/** Shared building blocks for the "mono precision" design. Colours come only from theme tokens (globals.css). */
+/** Shared building blocks for the "Meta AI" design. Colours come only from theme tokens (globals.css). */
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md';
 
-const base = 'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors duration-150 ' +
+const base = 'inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition duration-150 ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer';
 const variants: Record<Variant, string> = {
-  primary: 'bg-primary text-primary-fg hover:opacity-90',
-  secondary: 'border border-border-strong bg-surface text-fg hover:bg-surface-2',
+  primary: 'bg-grad text-white shadow-sm hover:brightness-110',
+  secondary: 'border border-border bg-surface text-fg shadow-card hover:bg-surface-2',
   ghost: 'text-muted hover:bg-surface-2 hover:text-fg',
   danger: 'border border-danger/40 text-danger hover:bg-danger-soft',
 };
@@ -28,12 +28,12 @@ export function ButtonLink({ variant, size, className, ...p }: ComponentProps<ty
   return <Link className={btn(variant, size, className)} {...p} />;
 }
 
-const field = 'w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-fg placeholder:text-subtle ' +
-  'transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-60';
+const field = 'w-full border border-border-strong bg-surface px-4 py-2 text-sm text-fg placeholder:text-subtle ' +
+  'transition focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft disabled:opacity-60';
 
-export const Input = ({ className, ...p }: ComponentProps<'input'>) => <input className={cx(field, 'min-h-11', className)} {...p} />;
-export const Textarea = ({ className, ...p }: ComponentProps<'textarea'>) => <textarea className={cx(field, className)} {...p} />;
-export const Select = ({ className, ...p }: ComponentProps<'select'>) => <select className={cx(field, 'min-h-11 w-auto pr-8', className)} {...p} />;
+export const Input = ({ className, ...p }: ComponentProps<'input'>) => <input className={cx(field, 'min-h-11 rounded-full file:mr-3', className)} {...p} />;
+export const Textarea = ({ className, ...p }: ComponentProps<'textarea'>) => <textarea className={cx(field, 'rounded-2xl', className)} {...p} />;
+export const Select = ({ className, ...p }: ComponentProps<'select'>) => <select className={cx(field, 'min-h-11 w-auto rounded-full pr-8', className)} {...p} />;
 
 /** Visible label above a control, with optional hint/error under it. */
 export function Field({ label, hint, error, children, className }: { label: string; hint?: string; error?: string; children: ReactNode; className?: string }) {
@@ -48,7 +48,7 @@ export function Field({ label, hint, error, children, className }: { label: stri
 }
 
 export const Card = ({ className, ...p }: ComponentProps<'div'>) =>
-  <div className={cx('rounded-xl border border-border bg-surface p-4', className)} {...p} />;
+  <div className={cx('rounded-2xl border border-border/70 bg-surface p-4 shadow-card', className)} {...p} />;
 
 type Tone = 'neutral' | 'ok' | 'warn' | 'danger';
 const tones: Record<Tone, string> = {
@@ -58,13 +58,13 @@ const tones: Record<Tone, string> = {
   danger: 'border-danger/40 bg-danger-soft text-danger',
 };
 export const Badge = ({ tone = 'neutral', className, ...p }: ComponentProps<'span'> & { tone?: Tone }) =>
-  <span className={cx('inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[11px] leading-4', tones[tone], className)} {...p} />;
+  <span className={cx('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold leading-4', tones[tone], className)} {...p} />;
 
 /** Badge tone for a document status. */
 export const statusTone = (s: string): Tone =>
   s === 'live' ? 'ok' : s === 'failed' ? 'danger' : s === 'review' ? 'warn' : 'neutral';
 
-/** Small uppercase mono label used for section captions. */
+/** Small semibold caption label above a section. */
 export const Label = ({ className, ...p }: ComponentProps<'p'>) =>
   <p className={cx('caps text-subtle', className)} {...p} />;
 
@@ -81,11 +81,18 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
   );
 }
 
+/** Brand mark: a Meta-AI-style gradient ring. */
+export const Logo = ({ className = 'size-6' }: { className?: string }) => (
+  <span aria-hidden className={cx('inline-block shrink-0 rounded-full bg-grad p-[3px]', className)}>
+    <span className="block size-full rounded-full bg-bg" />
+  </span>
+);
+
 export const Empty = ({ children }: { children: ReactNode }) =>
-  <p className="rounded-xl border border-dashed border-border-strong p-6 text-center text-sm text-muted">{children}</p>;
+  <p className="rounded-2xl border border-dashed border-border-strong p-8 text-center text-sm text-muted">{children}</p>;
 
 export const Notice = ({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) => (
-  <p role={tone === 'danger' ? 'alert' : 'status'} className={cx('rounded-lg border px-3 py-2 text-sm', tones[tone])}>{children}</p>
+  <p role={tone === 'danger' ? 'alert' : 'status'} className={cx('rounded-2xl border px-4 py-2.5 text-sm', tones[tone])}>{children}</p>
 );
 
 /** Inline Lucide-style icons (24px grid, stroke). Decorative: hidden from screen readers. */

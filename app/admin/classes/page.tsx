@@ -46,7 +46,7 @@ export default async function ClassesPage() {
       ) : <div className="mb-6"><Empty>{S.noSubjectsAssigned}</Empty></div>}
 
       {!classes.length ? <Empty>{S.noClasses}</Empty> : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div className="overflow-x-auto rounded-2xl border border-border/70 bg-surface shadow-card">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border">

@@ -25,7 +25,7 @@ export default async function LogsPage() {
       <PageHeader title={S.logs} description={S.logsSub} />
       {scope?.length === 0 && <div className="mb-4"><Empty>{S.noSubjectsAssigned}</Empty></div>}
       {!logs.length && scope?.length !== 0 && <Empty>{S.noLogs}</Empty>}
-      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border/70 bg-surface shadow-card">
         {logs.map((l) => (
           <details key={l.id} className="group">
             <summary className="flex cursor-pointer list-none items-start gap-3 px-4 py-3 hover:bg-surface-2 [&::-webkit-details-marker]:hidden">
@@ -41,7 +41,7 @@ export default async function LogsPage() {
             <div className="space-y-3 px-4 pb-4 pl-11 text-sm">
               <p className="whitespace-pre-wrap text-muted">{l.answer}</p>
               {l.reply && (
-                <div className="rounded-lg border border-accent-line bg-accent-soft px-3 py-2">
+                <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2">
                   <Label className="mb-0.5">{S.reply}</Label>
                   <p className="whitespace-pre-wrap">{l.reply}</p>
                 </div>

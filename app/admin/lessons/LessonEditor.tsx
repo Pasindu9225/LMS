@@ -46,7 +46,7 @@ export default function LessonEditor({ units, docs, lesson, pages: initialPages,
         </Field>
         <div className="space-y-1.5">
           <Label>{S.preview}</Label>
-          <div className="h-[31.5rem] overflow-y-auto rounded-lg border border-border bg-surface px-4 py-3 text-[15px]">
+          <div className="h-[31.5rem] overflow-y-auto rounded-xl border border-border bg-surface px-4 py-3 text-[15px]">
             {body ? <Markdown>{body}</Markdown> : <p className="text-subtle">{S.nothingYet}</p>}
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function LessonEditor({ units, docs, lesson, pages: initialPages,
         <Input name="video" value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://youtu.be/…" className="font-mono text-[13px]" />
       </Field>
       {videoId && (
-        <div className="max-w-md overflow-hidden rounded-xl border border-border">
+        <div className="max-w-md overflow-hidden rounded-2xl border border-border">
           <iframe src={`https://www.youtube-nocookie.com/embed/${videoId}`} title={S.preview} className="aspect-video w-full" allow="encrypted-media; picture-in-picture" allowFullScreen />
         </div>
       )}

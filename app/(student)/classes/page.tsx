@@ -38,7 +38,7 @@ export default async function ClassesPage() {
             </div>
             <div className="mt-3 space-y-2">
               {c.posts.map((p) => (
-                <div key={p.id} className="rounded-lg border-l-2 border-accent bg-surface-2 px-3 py-2 text-sm">
+                <div key={p.id} className="rounded-xl border-l-2 border-accent bg-surface-2 px-3 py-2 text-sm">
                   <Label className="mb-0.5 normal-case tracking-normal">{colomboDate(p.created_at)}</Label>
                   <p className="whitespace-pre-wrap">{p.body}</p>
                 </div>

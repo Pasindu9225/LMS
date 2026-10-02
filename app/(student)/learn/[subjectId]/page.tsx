@@ -35,7 +35,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
       </Link>
       <PageHeader eyebrow={t.chat.subject} title={name(outline.subject)} description={total ? fmt(t.learn.progress, { done, total }) : undefined} />
       {total > 0 && (
-        <div className="-mt-3 mb-8 h-1 rounded-full bg-surface-2"><div className="h-1 rounded-full bg-accent" style={{ width: `${(100 * done) / total}%` }} /></div>
+        <div className="-mt-3 mb-8 h-1.5 rounded-full bg-surface-2"><div className="h-1.5 rounded-full bg-grad" style={{ width: `${(100 * done) / total}%` }} /></div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
@@ -55,7 +55,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
                       <Link href={`/learn/lesson/${l.id}`} className="group flex min-h-11 items-center gap-3 py-2 text-sm">
                         <span
                           aria-hidden
-                          className={`flex size-5 shrink-0 items-center justify-center rounded-md border ${l.done ? 'border-accent bg-primary text-primary-fg' : 'border-border-strong'}`}
+                          className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${l.done ? 'border-transparent bg-grad text-white' : 'border-border-strong'}`}
                         >
                           {l.done && <Icon name="check" className="size-3" />}
                         </span>

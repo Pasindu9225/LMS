@@ -29,7 +29,7 @@ export default async function DocumentsPage() {
         ? <Card className="mb-6"><UploadForm subjects={[...subjects]} /></Card>
         : <Empty>{scope === null ? S.addSubjectFirst : S.noSubjectsAssigned}</Empty>}
       {docs.length > 0 ? (
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div className="overflow-x-auto rounded-2xl border border-border/70 bg-surface shadow-card">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border">

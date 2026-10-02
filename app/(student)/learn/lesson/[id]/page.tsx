@@ -29,7 +29,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
       <h1 className="text-3xl font-semibold tracking-tight">{l.title}</h1>
 
       {l.youtube_id && (
-        <div className="mt-6 overflow-hidden rounded-xl border border-border bg-surface-2">
+        <div className="mt-6 overflow-hidden rounded-2xl border border-border/70 bg-surface shadow-card-2">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${l.youtube_id}`} title={l.title} className="aspect-video w-full"
             allow="encrypted-media; picture-in-picture" allowFullScreen

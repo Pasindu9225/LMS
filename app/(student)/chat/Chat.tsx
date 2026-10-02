@@ -171,7 +171,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
           {convs.map((c) => (
             <div
               key={c.id}
-              className={`group flex items-center rounded-lg ${c.id === convId ? 'bg-surface-2 shadow-[inset_2px_0_0_var(--accent)]' : 'hover:bg-surface-2'}`}
+              className={`group flex items-center rounded-2xl ${c.id === convId ? 'bg-surface shadow-card' : 'hover:bg-surface-2'}`}
             >
               <Link
                 href={`/chat/${c.id}`} prefetch={false} onClick={() => setShowHistory(false)}
@@ -180,7 +180,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
                 <span className="flex items-center gap-2">
                   <span className={`truncate text-sm ${c.id === convId ? 'text-fg' : 'text-muted'}`}>{c.title}</span>
                   {c.hasNewReply && c.id !== convId && (
-                    <span role="img" aria-label={L.newReply} className="size-2 shrink-0 rounded-full bg-accent" />
+                    <span role="img" aria-label={L.newReply} className="size-2.5 shrink-0 rounded-full bg-grad" />
                   )}
                 </span>
                 <span className="font-mono text-[11px] text-subtle">{colomboDate(c.updatedAt)}</span>
@@ -214,15 +214,15 @@ export default function Chat({ subjects, conversations, conversationId, initialT
             {!subjects.length && <p className="text-muted">{L.noSubjects}</p>}
             {!msgs.length && subjects.length > 0 && (
               <div className="py-16 text-center">
-                <span aria-hidden className="mx-auto mb-4 block size-10 rounded-xl border border-accent-line bg-accent-soft" />
+                <span aria-hidden className="mx-auto mb-5 block size-14 rounded-full bg-grad p-1 shadow-[0_0_40px_-6px_var(--accent)]"><span className="block size-full rounded-full bg-bg" /></span>
                 <h1 className="text-xl font-semibold tracking-tight">{L.emptyTitle}</h1>
                 <p className="mt-2 text-sm text-muted">{L.empty}</p>
               </div>
             )}
             {msgs.map((m, i) => m.role === 'user' ? (
-              <div key={i} className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-primary-fg">{m.text}</div>
+              <div key={i} className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap rounded-[22px] rounded-br-md bg-fg px-4 py-2.5 text-bg">{m.text}</div>
             ) : (
-              <article key={i} className="max-w-full rounded-2xl rounded-bl-md border border-border bg-surface px-4 py-3">
+              <article key={i} className="grad-border max-w-full rounded-[22px] rounded-bl-md px-4 py-3 shadow-card">
                 {m.text ? (
                   <Markdown
                     components={{
@@ -230,14 +230,14 @@ export default function Chat({ subjects, conversations, conversationId, initialT
                         const n = href?.match(/^#src-(\d+)$/)?.[1];
                         if (!n) return <a href={href} target="_blank" rel="noreferrer">{children}</a>;
                         const s = m.sources[Number(n) - 1];
-                        const cls = 'mx-0.5 inline-flex items-center rounded border border-accent-line bg-accent-soft px-1 font-mono text-[11px] font-semibold text-accent no-underline';
+                        const cls = 'mx-0.5 inline-flex items-center rounded-full bg-accent-soft px-1.5 text-[11px] font-bold text-accent no-underline';
                         return s ? <a href={pdfUrl(s)} target="_blank" rel="noreferrer" className={cls}>{children}</a> : <span className={cls}>{children}</span>;
                       },
                     }}
                   >{linkCitations(m.text, m.sources.length)}</Markdown>
                 ) : (
                   <p className="flex items-center gap-2 text-sm text-subtle">
-                    <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-accent" /> {L.thinking}
+                    <span aria-hidden className="size-2 animate-pulse rounded-full bg-grad" /> {L.thinking}
                   </p>
                 )}
                 {m.sources.length > 0 && (
@@ -264,7 +264,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
         </div>
 
         <form onSubmit={ask} className="border-t border-border bg-bg px-4 py-3">
-          <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border-strong bg-surface p-1.5 pl-3 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25">
+          <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-[28px] border border-border bg-surface p-1.5 pl-4 shadow-card transition focus-within:border-accent-line focus-within:shadow-[0_4px_24px_-4px_var(--accent-line)]">
             <textarea
               name="q" required maxLength={1000} rows={2} placeholder={L.placeholder} aria-label={L.placeholder}
               className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2 text-sm text-fg placeholder:text-subtle focus:outline-none"
@@ -304,7 +304,7 @@ function FlagBox({ m, t, onSent }: { m: Msg; t: T; onSent: () => void }) {
   if (view === 'waiting') return status(L.flagWaiting);
   if (view === 'reviewed') return status(L.flagReviewed);
   if (view === 'reply') return (
-    <div className="mt-3 rounded-xl border border-accent-line bg-accent-soft p-3 text-sm">
+    <div className="mt-3 rounded-2xl border border-accent-line bg-accent-soft p-3 text-sm">
       <p className="mb-1 caps text-accent">
         {L.teacherReply}{m.repliedAt && ` · ${colomboDate(m.repliedAt)}`}
       </p>
@@ -322,7 +322,7 @@ function FlagBox({ m, t, onSent }: { m: Msg; t: T; onSent: () => void }) {
     <form onSubmit={send} className="mt-3 space-y-2">
       <textarea
         name="note" maxLength={500} rows={2} placeholder={L.flagNote} aria-label={L.flagNote}
-        className="w-full resize-none rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm placeholder:text-subtle focus:border-accent focus:outline-none"
+        className="w-full resize-none rounded-xl border border-border-strong bg-bg px-3 py-2 text-sm placeholder:text-subtle focus:border-accent focus:outline-none"
       />
       <div className="flex items-center gap-2">
         <Button size="sm" disabled={state === 'sending'}>{L.flagSend}</Button>
