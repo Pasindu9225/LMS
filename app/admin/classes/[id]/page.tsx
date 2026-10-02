@@ -22,7 +22,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   if (!isUuid(id)) notFound();
   await requireClass(user, id);
-  const [c, { t }] = await Promise.all([getClassDetail(id), getT()]);
+  const [c, { lang, t }] = await Promise.all([getClassDetail(id), getT()]);
   if (!c) notFound();
   const S = t.staff;
   const isAdmin = user.role === 'admin';
@@ -37,7 +37,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
         <Icon name="arrowLeft" /> {S.classes}
       </Link>
       <PageHeader
-        eyebrow={c.subject}
+        eyebrow={lang === 'si' ? c.subject_si : c.subject}
         title={<>{c.name} {c.archived && <Badge className="align-middle">{S.archived}</Badge>}</>}
         description={<>{S.batch} <span className="font-mono">{c.batch_year ?? '—'}</span> · {fmt(S.teacherOf, { name: c.teacher ?? '—' })}</>}
         actions={

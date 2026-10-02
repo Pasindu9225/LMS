@@ -8,8 +8,8 @@ import { Badge, ButtonLink, Card, Empty, Icon, PageHeader } from '@/app/ui/ui';
 export default async function LessonsPage({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {
   const scope = await subjectScope(await requireStaff());
   const [subjects, { lang, t }] = await Promise.all([
-    sql<{ id: string; name_en: string }[]>`
-      select id, name_en from subjects where ${scope === null} or id = any(${sql.array(scope ?? [])}::uuid[]) order by name_en`,
+    sql<{ id: string; name_en: string; name_si: string }[]>`
+      select id, name_en, name_si from subjects where ${scope === null} or id = any(${sql.array(scope ?? [])}::uuid[]) order by name_en`,
     getT(),
   ]);
   const S = t.staff;
@@ -26,7 +26,7 @@ export default async function LessonsPage({ searchParams }: { searchParams: Prom
           <Link
             key={s.id} href={`/admin/lessons?subject=${s.id}`} aria-current={s.id === subject.id ? 'page' : undefined}
             className={`rounded-md px-3 py-1.5 text-sm ${s.id === subject.id ? 'bg-surface-2 font-medium text-fg' : 'text-muted hover:text-fg'}`}
-          >{s.name_en}</Link>
+          >{lang === 'si' ? s.name_si : s.name_en}</Link>
         ))}
       </nav>
       {!units.length && <Empty>{S.noUnits}</Empty>}

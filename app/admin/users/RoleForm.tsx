@@ -5,12 +5,12 @@ import { ROLES, type Role } from '@/lib/roles';
 import { useT } from '@/app/ui/prefs';
 import { Select, btn } from '@/app/ui/ui';
 
-type Props = { id: string; role: Role; subjectIds: string[]; subjects: { id: string; name_en: string }[] };
+type Props = { id: string; role: Role; subjectIds: string[]; subjects: { id: string; name_en: string; name_si: string }[] };
 const roleKey = { admin: 'roleAdmin', teacher: 'roleTeacher', student: 'roleStudent' } as const;
 
 export default function RoleForm({ id, role, subjectIds, subjects }: Props) {
   const [error, action, pending] = useActionState(saveUserRole, '');
-  const { t } = useT();
+  const { lang, t } = useT();
   const S = t.staff;
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
@@ -23,7 +23,7 @@ export default function RoleForm({ id, role, subjectIds, subjects }: Props) {
         {subjects.map((s) => (
           <label key={s.id} className="flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border-strong px-2.5 text-xs text-muted has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent">
             <input type="checkbox" name="subjects" value={s.id} defaultChecked={subjectIds.includes(s.id)} className="accent-[var(--accent)]" />
-            {s.name_en}
+            {lang === 'si' ? s.name_si : s.name_en}
           </label>
         ))}
       </fieldset>

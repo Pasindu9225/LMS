@@ -6,12 +6,12 @@ import Sources, { loadChunks } from '../Sources';
 
 export default async function LogsPage() {
   const scope = await subjectScope(await requireStaff());
-  const [logs, { t }] = await Promise.all([
+  const [logs, { lang, t }] = await Promise.all([
     sql<{
-      id: string; question: string; answer: string; chunk_ids: string[]; created_at: Date; student: string; subject: string | null;
+      id: string; question: string; answer: string; chunk_ids: string[]; created_at: Date; student: string; subject: string | null; subject_si: string | null;
       flag_status: string | null; reply: string | null;
     }[]>`
-      select l.id, l.question, l.answer, l.chunk_ids, l.created_at, p.name as student, s.name_en as subject, l.flag_status, l.reply
+      select l.id, l.question, l.answer, l.chunk_ids, l.created_at, p.name as student, s.name_en as subject, s.name_si as subject_si, l.flag_status, l.reply
       from chat_logs l join profiles p on p.id = l.user_id left join subjects s on s.id = l.subject_id
       where ${scope === null} or l.subject_id = any(${sql.array(scope ?? [])}::uuid[])
       order by l.created_at desc limit 100`,
@@ -33,7 +33,7 @@ export default async function LogsPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{l.question}</p>
                 <p className="font-mono text-xs text-subtle">
-                  {l.created_at.toLocaleString('en-LK', { timeZone: 'Asia/Colombo' })} · {l.student} · {l.subject ?? '—'}
+                  {l.created_at.toLocaleString('en-LK', { timeZone: 'Asia/Colombo' })} · {l.student} · {(lang === 'si' ? l.subject_si : l.subject) ?? '—'}
                 </p>
               </div>
               {l.flag_status && <Badge tone="warn">{S.flag}: {S[l.flag_status as 'open' | 'answered' | 'dismissed']}</Badge>}

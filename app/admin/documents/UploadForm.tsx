@@ -9,7 +9,7 @@ import { Button, Field, Icon, Input, Notice, Select } from '@/app/ui/ui';
 
 const MAX_BYTES = 200 * 1024 * 1024;
 
-export default function UploadForm({ subjects }: { subjects: { id: string; name_en: string }[] }) {
+export default function UploadForm({ subjects }: { subjects: { id: string; name: string }[] }) {
   const router = useRouter();
   const { t } = useT();
   const S = t.staff;
@@ -44,7 +44,7 @@ export default function UploadForm({ subjects }: { subjects: { id: string; name_
     <form action={submit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1.2fr_1.2fr_6rem_auto] lg:items-end">
       <Field label={S.title}><Input name="title" required /></Field>
       <Field label={S.subject}>
-        <Select name="subjectId" required className="w-full">{subjects.map((s) => <option key={s.id} value={s.id}>{s.name_en}</option>)}</Select>
+        <Select name="subjectId" required className="w-full">{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
       </Field>
       <Field label={S.type}>
         <Select name="docType" className="w-full">

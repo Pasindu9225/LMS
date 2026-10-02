@@ -2,7 +2,7 @@
 import { useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { fmt } from '@/lib/i18n';
+import { docStatus, fmt } from '@/lib/i18n';
 import { savePage, retryOcr, setUnitRange, setDocumentStatus, deleteDocument } from '@/app/admin/actions';
 import { useT } from '@/app/ui/prefs';
 import { Badge, Button, Card, Icon, Input, Notice, PageHeader, Select, Textarea, statusTone } from '@/app/ui/ui';
@@ -54,7 +54,7 @@ export default function Reviewer({ doc, pages, units }: { doc: Doc; pages: Page[
         eyebrow={doc.subject}
         title={doc.title}
         actions={<>
-          <Badge tone={statusTone(doc.status)}>{doc.status}</Badge>
+          <Badge tone={statusTone(doc.status)}>{docStatus(t, doc.status)}</Badge>
           {(doc.status === 'review' || doc.status === 'archived') && (
             <Button size="sm" disabled={pending} onClick={() => run(S.publish, () => setDocumentStatus(doc.id, 'live'))}>{S.publish}</Button>
           )}
@@ -115,9 +115,9 @@ export default function Reviewer({ doc, pages, units }: { doc: Doc; pages: Page[
           <Card>
             <form action={unitRange} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="caps text-subtle">{S.assignPages}</span>
-              <Input name="from" type="number" min={1} max={pages.length} required defaultValue={n} className="min-h-9 w-20 py-1" aria-label="from" />
+              <Input name="from" type="number" min={1} max={pages.length} required defaultValue={n} className="min-h-9 w-20 py-1" aria-label={S.fromPage} />
               <span className="text-muted">{S.to}</span>
-              <Input name="to" type="number" min={1} max={pages.length} required defaultValue={n} className="min-h-9 w-20 py-1" aria-label="to" />
+              <Input name="to" type="number" min={1} max={pages.length} required defaultValue={n} className="min-h-9 w-20 py-1" aria-label={S.toPage} />
               <Icon name="arrowRight" className="size-3.5 text-subtle" />
               <Select name="unit" className="min-h-9 py-1" aria-label={S.unit}>
                 <option value="">{S.noUnit}</option>

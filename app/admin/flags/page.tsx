@@ -16,7 +16,7 @@ export default async function FlagsPage({ searchParams }: { searchParams: Promis
   const scope = await subjectScope(user);
   const { status: raw } = await searchParams;
   const status = STATUSES.find((s) => s === raw) ?? 'open';
-  const [flags, { t }] = await Promise.all([listFlags(status, scope), getT()]);
+  const [flags, { lang, t }] = await Promise.all([listFlags(status, scope), getT()]);
   const byId = await loadChunks(flags.flatMap((f) => f.chunk_ids));
   const S = t.staff;
 
@@ -36,7 +36,7 @@ export default async function FlagsPage({ searchParams }: { searchParams: Promis
       <div className="space-y-4">
         {flags.map((f) => (
           <Card key={f.id} className="space-y-3">
-            <p className="font-mono text-xs text-subtle">{when(f.flagged_at)} · {f.student} · {f.subject ?? '—'}</p>
+            <p className="font-mono text-xs text-subtle">{when(f.flagged_at)} · {f.student} · {(lang === 'si' ? f.subject_si : f.subject) ?? '—'}</p>
             <p className="font-medium">{f.question}</p>
             <p className="whitespace-pre-wrap rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">{f.answer}</p>
             {f.flag_note && (

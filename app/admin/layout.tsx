@@ -3,7 +3,7 @@ import { requireStaff, subjectScope } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { getT } from '@/lib/prefs';
 import { Badge, Icon, type IconName } from '@/app/ui/ui';
-import { LangSwitch, NavLink, ThemeSwitch } from '@/app/ui/prefs';
+import { Dropdown, LangSwitch, NavLink, ThemeSwitch } from '@/app/ui/prefs';
 
 type Item = { href: string; icon: IconName; label: string; count?: number };
 
@@ -58,12 +58,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-dvh">
       <header className="sticky top-0 z-20 border-b border-border bg-bg/80 backdrop-blur">
         <div className="flex h-14 items-center gap-2 px-4">
-          <details className="relative lg:hidden">
+          <Dropdown className="relative lg:hidden">
             <summary aria-label={t.common.menu} className="flex size-9 cursor-pointer list-none items-center justify-center rounded-lg border border-border-strong [&::-webkit-details-marker]:hidden">
               <Icon name="menu" />
             </summary>
             <div className="absolute left-0 z-30 mt-2 w-64 rounded-xl border border-border bg-surface p-3 shadow-lg shadow-black/10">{nav}</div>
-          </details>
+          </Dropdown>
           <Link href="/admin" className="flex items-center gap-2 font-semibold tracking-tight">
             <span aria-hidden className="size-4 rounded-[5px] bg-primary" />
             <span className="hidden sm:inline">{t.common.brand}</span>

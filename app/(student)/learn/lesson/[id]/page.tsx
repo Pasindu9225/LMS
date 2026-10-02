@@ -19,7 +19,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <nav aria-label="breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-muted">
+      <nav aria-label={t.common.breadcrumb}className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-muted">
         <Link href="/learn" className="hover:text-fg">{t.learn.title}</Link>
         <span aria-hidden>/</span>
         <Link href={`/learn/${l.subject_id}`} className="hover:text-fg">{si ? l.subject_si : l.subject_en}</Link>

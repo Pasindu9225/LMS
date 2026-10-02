@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useEffect, useTransition, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useTransition, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { dict, type Lang, type T } from '@/lib/i18n';
@@ -86,4 +86,27 @@ export function NavLink({ href, icon, label, exact, variant = 'top' }: { href: s
       <span className="truncate">{label}</span>
     </Link>
   );
+}
+
+/** A <details> dropdown that closes itself after navigation, on Escape and on an outside click. */
+export function Dropdown({ className, children }: { className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  const path = usePathname();
+  useEffect(() => {
+    if (ref.current) ref.current.open = false;
+  }, [path]);
+  useEffect(() => {
+    const close = (e: Event) => {
+      const d = ref.current;
+      if (!d?.open) return;
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !d.contains(e.target as Node)) d.open = false;
+    };
+    document.addEventListener('keydown', close);
+    document.addEventListener('pointerdown', close);
+    return () => {
+      document.removeEventListener('keydown', close);
+      document.removeEventListener('pointerdown', close);
+    };
+  }, []);
+  return <details ref={ref} className={className}>{children}</details>;
 }

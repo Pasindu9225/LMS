@@ -20,7 +20,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       from profiles p join auth.users u on u.id = p.id
       where ${q === ''} or p.name ilike ${like} or u.email ilike ${like}
       order by p.created_at desc limit ${PAGE + 1} offset ${(page - 1) * PAGE}`,
-    sql<{ id: string; name_en: string }[]>`select id, name_en from subjects order by name_en`,
+    sql<{ id: string; name_en: string; name_si: string }[]>`select id, name_en, name_si from subjects order by name_en`,
     getT(),
   ]);
   const S = t.staff;

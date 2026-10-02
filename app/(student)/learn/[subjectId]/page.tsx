@@ -54,11 +54,12 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
                     <li key={l.id}>
                       <Link href={`/learn/lesson/${l.id}`} className="group flex min-h-11 items-center gap-3 py-2 text-sm">
                         <span
-                          aria-label={l.done ? 'done' : undefined}
+                          aria-hidden
                           className={`flex size-5 shrink-0 items-center justify-center rounded-md border ${l.done ? 'border-accent bg-primary text-primary-fg' : 'border-border-strong'}`}
                         >
                           {l.done && <Icon name="check" className="size-3" />}
                         </span>
+                        <span className="sr-only">{l.done ? t.learn.isDone : t.learn.notDone}:</span>
                         <span className="mr-auto group-hover:text-accent">{l.title}</span>
                         <Icon name="arrowRight" className="size-3.5 text-subtle" />
                       </Link>

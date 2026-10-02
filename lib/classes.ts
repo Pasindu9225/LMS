@@ -88,14 +88,14 @@ export function leaveClass(studentId: string, classId: string) {
 }
 
 export type StaffClassRow = {
-  id: string; name: string; batch_year: number | null; archived: boolean; subject: string; teacher: string | null; students: number;
+  id: string; name: string; batch_year: number | null; archived: boolean; subject: string; subject_si: string; teacher: string | null; students: number;
 };
 
 /** Admin: every class. Teacher: classes they teach in subjects they still hold. */
 export async function listStaffClasses(user: AppUser) {
   const scope = await subjectScope(user);
   return sql<StaffClassRow[]>`
-    select c.id, c.name, c.batch_year, c.archived, s.name_en as subject, p.name as teacher,
+    select c.id, c.name, c.batch_year, c.archived, s.name_en as subject, s.name_si as subject_si, p.name as teacher,
            (select count(*)::int from class_members m where m.class_id = c.id) as students
     from classes c join subjects s on s.id = c.subject_id left join profiles p on p.id = c.teacher_id
     where ${scope === null} or (c.teacher_id = ${user.id} and c.subject_id = any(${sql.array(scope ?? [])}::uuid[]))
@@ -104,8 +104,8 @@ export async function listStaffClasses(user: AppUser) {
 
 export async function getClassDetail(classId: string) {
   const [[c], members, posts] = await Promise.all([
-    sql<{ id: string; name: string; batch_year: number | null; archived: boolean; join_code: string; subject_id: string; subject: string; teacher_id: string | null; teacher: string | null }[]>`
-      select c.id, c.name, c.batch_year, c.archived, c.join_code, c.subject_id, s.name_en as subject, c.teacher_id, p.name as teacher
+    sql<{ id: string; name: string; batch_year: number | null; archived: boolean; join_code: string; subject_id: string; subject: string; subject_si: string; teacher_id: string | null; teacher: string | null }[]>`
+      select c.id, c.name, c.batch_year, c.archived, c.join_code, c.subject_id, s.name_en as subject, s.name_si as subject_si, c.teacher_id, p.name as teacher
       from classes c join subjects s on s.id = c.subject_id left join profiles p on p.id = c.teacher_id where c.id = ${classId}`,
     sql<{ id: string; name: string; email: string; joined: Date }[]>`
       select p.id, p.name, u.email, m.created_at as joined

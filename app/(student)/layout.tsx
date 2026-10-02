@@ -3,7 +3,7 @@ import { requireUser } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { getT } from '@/lib/prefs';
 import { Icon } from '@/app/ui/ui';
-import { LangSwitch, NavLink, ThemeSwitch } from '@/app/ui/prefs';
+import { Dropdown, LangSwitch, NavLink, ThemeSwitch } from '@/app/ui/prefs';
 
 /** Student area: top bar (desktop) + bottom tabs (phones). The page owns the space below. */
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
 
   return (
     <div className="flex h-dvh flex-col">
-      <header className="relative shrink-0 border-b border-border bg-bg/80 backdrop-blur">
+      <header className="relative z-20 shrink-0 border-b border-border bg-bg/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
           <Link href="/chat" className="mr-2 flex items-center gap-2 font-semibold tracking-tight">
             <span aria-hidden className="size-4 rounded-[5px] bg-primary" />
@@ -30,7 +30,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
           <div className="ml-auto flex items-center gap-2">
             <LangSwitch />
             <ThemeSwitch />
-            <details className="relative">
+            <Dropdown className="relative">
               <summary
                 aria-label={t.common.account}
                 className="flex size-9 cursor-pointer list-none items-center justify-center rounded-full border border-border-strong bg-surface text-sm font-semibold text-muted hover:text-fg [&::-webkit-details-marker]:hidden"
@@ -53,7 +53,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
                   </button>
                 </form>
               </div>
-            </details>
+            </Dropdown>
           </div>
         </div>
         <div aria-hidden className="accent-rule absolute inset-x-0 bottom-[-1px] opacity-60" />

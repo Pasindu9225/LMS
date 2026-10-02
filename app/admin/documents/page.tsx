@@ -2,21 +2,23 @@ import Link from 'next/link';
 import { requireStaff, subjectScope } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { getT } from '@/lib/prefs';
+import { docStatus, docType } from '@/lib/i18n';
 import { Badge, Card, Empty, PageHeader, statusTone } from '@/app/ui/ui';
 import UploadForm from './UploadForm';
 import AutoRefresh from '@/app/admin/AutoRefresh';
 
 export default async function DocumentsPage() {
   const scope = await subjectScope(await requireStaff());
-  const { t } = await getT();
+  const { lang, t } = await getT();
   const S = t.staff;
   const mine = sql`(${scope === null} or s.id = any(${sql.array(scope ?? [])}::uuid[]))`;
-  const subjects = await sql<{ id: string; name_en: string }[]>`select s.id, s.name_en from subjects s where ${mine} order by s.name_en`;
+  const nm = lang === 'si' ? sql`s.name_si` : sql`s.name_en`;
+  const subjects = await sql<{ id: string; name: string }[]>`select s.id, ${nm} as name from subjects s where ${mine} order by 2`;
   const docs = await sql<{
     id: string; title: string; doc_type: string; year: number | null; status: string;
     page_count: number; pages_done: number; error: string | null; subject: string;
   }[]>`
-    select d.id, d.title, d.doc_type, d.year, d.status, d.page_count, d.pages_done, d.error, s.name_en as subject
+    select d.id, d.title, d.doc_type, d.year, d.status, d.page_count, d.pages_done, d.error, ${nm} as subject
     from documents d join subjects s on s.id = d.subject_id where ${mine} order by d.created_at desc`;
   const active = docs.some((d) => d.status === 'queued' || d.status === 'processing');
 
@@ -43,8 +45,8 @@ export default async function DocumentsPage() {
                     {d.error && <p className="mt-0.5 text-xs text-danger">{d.error}</p>}
                   </td>
                   <td className="px-4 py-3 text-muted">{d.subject}</td>
-                  <td className="px-4 py-3 text-muted">{d.doc_type.replace('_', ' ')}</td>
-                  <td className="px-4 py-3"><Badge tone={statusTone(d.status)}>{d.status}</Badge></td>
+                  <td className="px-4 py-3 text-muted">{docType(t, d.doc_type)}</td>
+                  <td className="px-4 py-3"><Badge tone={statusTone(d.status)}>{docStatus(t, d.status)}</Badge></td>
                   <td className="px-4 py-3 font-mono text-xs text-muted">
                     {d.page_count ? (d.status === 'processing' || d.status === 'queued' ? `${d.pages_done}/${d.page_count}` : d.page_count) : '—'}
                   </td>

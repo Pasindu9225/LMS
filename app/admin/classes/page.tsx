@@ -10,10 +10,10 @@ import MessageForm from '../MessageForm';
 export default async function ClassesPage() {
   const user = await requireStaff();
   const scope = await subjectScope(user);
-  const [classes, subjects, teachers, { t }] = await Promise.all([
+  const [classes, subjects, teachers, { lang, t }] = await Promise.all([
     listStaffClasses(user),
-    sql<{ id: string; name_en: string }[]>`
-      select id, name_en from subjects where ${scope === null} or id = any(${sql.array(scope ?? [])}::uuid[]) order by name_en`,
+    sql<{ id: string; name_en: string; name_si: string }[]>`
+      select id, name_en, name_si from subjects where ${scope === null} or id = any(${sql.array(scope ?? [])}::uuid[]) order by name_en`,
     user.role === 'admin' ? sql<{ id: string; name: string; subjects: string }[]>`
       select p.id, p.name, string_agg(s.name_en, ', ' order by s.name_en) as subjects
       from profiles p join teacher_subjects ts on ts.teacher_id = p.id join subjects s on s.id = ts.subject_id
@@ -30,7 +30,7 @@ export default async function ClassesPage() {
           <MessageForm action={createClassAction} submit={S.createClass} className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_8rem_1fr_auto]">
             <Field label={S.className}><Input name="name" required maxLength={100} placeholder={S.classNamePh} /></Field>
             <Field label={S.subject}>
-              <Select name="subjectId" required className="w-full">{subjects.map((s) => <option key={s.id} value={s.id}>{s.name_en}</option>)}</Select>
+              <Select name="subjectId" required className="w-full">{subjects.map((s) => <option key={s.id} value={s.id}>{lang === 'si' ? s.name_si : s.name_en}</option>)}</Select>
             </Field>
             <Field label={S.batchYear}><Input name="batchYear" type="number" min={2000} max={2100} /></Field>
             {user.role === 'admin' ? (
@@ -60,7 +60,7 @@ export default async function ClassesPage() {
                     <Link href={`/admin/classes/${c.id}`} className="font-medium hover:text-accent">{c.name}</Link>
                     {c.archived && <Badge className="ml-2">{S.archived}</Badge>}
                   </td>
-                  <td className="px-4 py-3 text-muted">{c.subject}</td>
+                  <td className="px-4 py-3 text-muted">{lang === 'si' ? c.subject_si : c.subject}</td>
                   <td className="px-4 py-3 font-mono text-xs text-muted">{c.batch_year ?? '—'}</td>
                   <td className="px-4 py-3 text-muted">{c.teacher ?? '—'}</td>
                   <td className="px-4 py-3 font-mono text-xs">{c.students}</td>

@@ -77,7 +77,7 @@ export type SubjectDoc = { id: string; title: string; status: string; page_count
 /** Everything the editor needs: the lesson (if any), its subject's units and documents. */
 export async function editorData(subjectId: string, lessonId?: string) {
   const [units, docs, lesson, pages] = await Promise.all([
-    sql<{ id: string; name_en: string }[]>`select u.id, u.name_en from units u where u.subject_id = ${subjectId} order by ${unitOrder}`,
+    sql<{ id: string; name_en: string; name_si: string }[]>`select u.id, u.name_en, u.name_si from units u where u.subject_id = ${subjectId} order by ${unitOrder}`,
     sql<SubjectDoc[]>`select id, title, status, page_count from documents where subject_id = ${subjectId} order by title`,
     lessonId ? sql<{ id: string; unit_id: string; title: string; body: string; youtube_id: string | null; sort_order: number; published: boolean }[]>`
       select id, unit_id, title, body, youtube_id, sort_order, published from lessons where id = ${lessonId}` : Promise.resolve([]),

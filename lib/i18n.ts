@@ -12,6 +12,7 @@ const si = {
     account: 'ගිණුම', menu: 'මෙනුව', close: 'වසන්න', save: 'සුරකින්න', saved: 'සුරකින ලදී', cancel: 'අවලංගු කරන්න', delete: 'මකන්න',
     edit: 'සංස්කරණය', open: 'විවෘත කරන්න', back: 'ආපසු', search: 'සොයන්න', none: 'කිසිවක් නැත', error: 'දෝෂයක් ඇති විය. නැවත උත්සාහ කරන්න.',
     page: 'පිටුව', pages: 'පිටු', notFound: 'මෙම පිටුව සොයාගත නොහැක.', home: 'මුල් පිටුව', loading: 'පූරණය වෙමින්…',
+    breadcrumb: 'ස්ථානය', description: 'A/L අධ්‍යයන සහායක',
   },
   auth: {
     login: 'පිවිසෙන්න', loginSub: 'ඔබේ ගිණුමට ඇතුළු වන්න', signup: 'ලියාපදිංචි වන්න', signupSub: 'නව සිසු ගිණුමක් සාදන්න',
@@ -33,12 +34,14 @@ const si = {
     pastPapers: 'පසුගිය ප්‍රශ්න පත්‍ර', paper: 'ප්‍රශ්න පත්‍රය', scheme: 'ලකුණු දීමේ පටිපාටිය', year: 'වර්ෂය', noPapers: 'තවම නැත.',
     textbook: 'පෙළපොත', pagesRange: 'පිටු {from}–{to}', pageOne: 'පිටුව {n}',
     markDone: 'සම්පූර්ණ කළා', doneUndo: 'සම්පූර්ණයි — අහෝසි කරන්න', prev: 'පෙර', next: 'ඊළඟ', unit: 'ඒකකය',
+    isDone: 'සම්පූර්ණයි', notDone: 'සම්පූර්ණ කර නැත',
   },
   quiz: {
     practice: 'පුහුණු ප්‍රශ්නාවලි', practiceSub: 'ඔබේ පොත් වලින් ප්‍රශ්න 5ක්', notAvailable: 'තවම නැත.',
     quizMe: 'ප්‍රශ්නාවලිය', making: 'සකසමින්…', recent: 'මෑත', notSubmitted: 'ඉදිරිපත් කර නැත',
     title: 'පුහුණු ප්‍රශ්නාවලිය', question: 'ප්‍රශ්නය {n}', submit: 'ඉදිරිපත් කරන්න', answerAll: 'සියලු ප්‍රශ්නවලට පිළිතුරු දෙන්න.',
     alreadySubmitted: 'දැනටමත් ඉදිරිපත් කර ඇත.', correct: 'නිවැරදි පිළිතුර', yourAnswer: 'ඔබේ පිළිතුර', again: 'තවත් ප්‍රශ්නාවලියක්',
+    gotRight: 'නිවැරදියි', gotWrong: 'වැරදියි',
     limit: 'අද ප්‍රශ්නාවලි 20 ඉක්මවා ඇත.', material: 'මෙම ඒකකයට තවම ප්‍රමාණවත් අන්තර්ගතයක් නැත.',
     failed: 'ප්‍රශ්නාවලියක් සෑදිය නොහැකි විය, නැවත උත්සාහ කරන්න.', invalid: 'දෝෂයකි.', source: 'මූලාශ්‍රය',
   },
@@ -82,6 +85,8 @@ const si = {
     usersSub: 'භූමිකා සහ ගුරුවරුන්ගේ විෂයයන්', searchPh: 'නම හෝ ඊමේල් සොයන්න', name: 'නම', email: 'ඊමේල්', joinedOn: 'සම්බන්ධ විය',
     roleSubjects: 'භූමිකාව සහ විෂයයන්', teacherHint: 'ගුරුවරුන් සලකුණු කළ විෂයයන්හි ලේඛන, සලකුණු සහ ලොග් පමණක් කළමනාකරණය කරයි.',
     noUsers: 'පරිශීලකයන් හමු නොවීය.', newer: 'අලුත්', older: 'පැරණි', roleAdmin: 'පරිපාලක', roleTeacher: 'ගුරුවරයා', roleStudent: 'සිසුවා',
+    fromPage: 'ආරම්භක පිටුව', toPage: 'අවසාන පිටුව',
+    statusQueued: 'පෝලිමේ', statusProcessing: 'සකසමින්', statusReview: 'සමාලෝචනය', statusLive: 'ප්‍රකාශිත', statusFailed: 'අසාර්ථක', statusArchived: 'සංරක්ෂිත',
   },
 };
 
@@ -96,6 +101,7 @@ const en = {
     account: 'Account', menu: 'Menu', close: 'Close', save: 'Save', saved: 'Saved', cancel: 'Cancel', delete: 'Delete',
     edit: 'Edit', open: 'Open', back: 'Back', search: 'Search', none: 'None', error: 'Something went wrong. Please try again.',
     page: 'page', pages: 'pages', notFound: 'This page could not be found.', home: 'Home', loading: 'Loading…',
+    breadcrumb: 'Breadcrumb', description: 'A/L study assistant',
   },
   auth: {
     login: 'Log in', loginSub: 'Sign in to your account', signup: 'Sign up', signupSub: 'Create a new student account',
@@ -117,12 +123,14 @@ const en = {
     pastPapers: 'Past papers', paper: 'Paper', scheme: 'Marking scheme', year: 'Year', noPapers: 'None yet.',
     textbook: 'Textbook', pagesRange: 'pages {from}–{to}', pageOne: 'page {n}',
     markDone: 'Mark as done', doneUndo: 'Done — undo', prev: 'Previous', next: 'Next', unit: 'Unit',
+    isDone: 'Done', notDone: 'Not done',
   },
   quiz: {
     practice: 'Practice quizzes', practiceSub: '5 questions from your textbooks', notAvailable: 'Not available yet.',
     quizMe: 'Quiz me', making: 'Making your quiz…', recent: 'Recent', notSubmitted: 'not submitted',
     title: 'Practice quiz', question: 'Question {n}', submit: 'Submit', answerAll: 'Answer every question.',
     alreadySubmitted: 'Already submitted.', correct: 'Correct answer', yourAnswer: 'Your answer', again: 'Another quiz',
+    gotRight: 'Correct', gotWrong: 'Wrong',
     limit: 'You have done 20 quizzes today.', material: 'Not enough material for this unit yet.',
     failed: 'Couldn’t make a quiz, please try again.', invalid: 'Something went wrong.', source: 'Source',
   },
@@ -166,8 +174,22 @@ const en = {
     usersSub: 'Roles and teacher subjects', searchPh: 'Search name or email', name: 'Name', email: 'Email', joinedOn: 'Joined',
     roleSubjects: 'Role & subjects', teacherHint: 'Teachers manage documents, flags and chat logs for the ticked subjects only.',
     noUsers: 'No users found.', newer: 'Newer', older: 'Older', roleAdmin: 'Admin', roleTeacher: 'Teacher', roleStudent: 'Student',
+    fromPage: 'From page', toPage: 'To page',
+    statusQueued: 'queued', statusProcessing: 'processing', statusReview: 'review', statusLive: 'live', statusFailed: 'failed', statusArchived: 'archived',
   },
 } satisfies Shape<Dict>;
 
 export const dict: Record<Lang, Dict> = { si, en };
 export type T = Dict;
+
+const statusKey = {
+  queued: 'statusQueued', processing: 'statusProcessing', review: 'statusReview',
+  live: 'statusLive', failed: 'statusFailed', archived: 'statusArchived',
+} as const;
+const typeKey = {
+  textbook: 'typeTextbook', past_paper: 'typePastPaper', marking_scheme: 'typeScheme', syllabus: 'typeSyllabus', other: 'typeOther',
+} as const;
+
+/** Translated document status / type (falls back to the raw value for anything unknown). */
+export const docStatus = (t: T, s: string) => (s in statusKey ? t.staff[statusKey[s as keyof typeof statusKey]] : s);
+export const docType = (t: T, s: string) => (s in typeKey ? t.staff[typeKey[s as keyof typeof typeKey]] : s);

@@ -99,6 +99,8 @@
   *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
 }
 
+/* In layers, so Tailwind utilities on the same element (no-underline, tracking-normal, text-sm) still win. */
+@layer components {
 /* Markdown (tutor answers, lessons, quizzes) */
 .md { line-height: 1.7; }
 .md p { margin: 0.5rem 0; }
@@ -119,3 +121,4 @@
    spaced apart (it breaks conjuncts), so in Sinhala they use the normal font without tracking. */
 .caps { font-family: var(--font-mono); font-size: 11px; line-height: 1.4; text-transform: uppercase; letter-spacing: 0.12em; }
 :lang(si) .caps { font-family: var(--font-sans); font-size: 12px; text-transform: none; letter-spacing: 0; }
+}

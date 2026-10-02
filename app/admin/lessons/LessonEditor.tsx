@@ -8,13 +8,13 @@ import { Button, Card, Field, Icon, Input, Label, Notice, Select, Textarea, btn 
 import { saveLessonAction } from '../lesson-actions';
 
 type Lesson = { id: string; unit_id: string; title: string; body: string; youtube_id: string | null; sort_order: number; published: boolean };
-type Props = { units: { id: string; name_en: string }[]; docs: SubjectDoc[]; lesson: Lesson | null; pages: PageRef[]; unitId: string };
+type Props = { units: { id: string; name_en: string; name_si: string }[]; docs: SubjectDoc[]; lesson: Lesson | null; pages: PageRef[]; unitId: string };
 
 const small = 'min-h-9 py-1';
 
 /** Controlled fields, so nothing typed is lost when the server returns an error. */
 export default function LessonEditor({ units, docs, lesson, pages: initialPages, unitId }: Props) {
-  const { t } = useT();
+  const { lang, t } = useT();
   const S = t.staff;
   const [error, run, pending] = useActionState(saveLessonAction, '');
   const [title, setTitle] = useState(lesson?.title ?? '');
@@ -34,7 +34,7 @@ export default function LessonEditor({ units, docs, lesson, pages: initialPages,
         <Field label={S.lessonTitle}><Input name="title" value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={200} /></Field>
         <Field label={S.unit}>
           <Select name="unitId" value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full">
-            {units.map((u) => <option key={u.id} value={u.id}>{u.name_en}</option>)}
+            {units.map((u) => <option key={u.id} value={u.id}>{lang === 'si' ? u.name_si : u.name_en}</option>)}
           </Select>
         </Field>
         <Field label={S.position}><Input name="sortOrder" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="font-mono" /></Field>
@@ -73,12 +73,12 @@ export default function LessonEditor({ units, docs, lesson, pages: initialPages,
                 </Select>
                 <Input
                   name="pageFrom" type="number" min={1} max={doc?.page_count || undefined} value={p.from}
-                  onChange={(e) => setPage(i, { from: Number(e.target.value) })} className={`${small} w-20 font-mono`} aria-label="from"
+                  onChange={(e) => setPage(i, { from: Number(e.target.value) })} className={`${small} w-20 font-mono`} aria-label={S.fromPage}
                 />
                 <span className="text-subtle">–</span>
                 <Input
                   name="pageTo" type="number" min={1} max={doc?.page_count || undefined} value={p.to}
-                  onChange={(e) => setPage(i, { to: Number(e.target.value) })} className={`${small} w-20 font-mono`} aria-label="to"
+                  onChange={(e) => setPage(i, { to: Number(e.target.value) })} className={`${small} w-20 font-mono`} aria-label={S.toPage}
                 />
                 <button type="button" onClick={() => setPages((ps) => ps.filter((_, j) => j !== i))} className={btn('ghost', 'sm', 'hover:text-danger')} aria-label={S.remove}>
                   <Icon name="x" />

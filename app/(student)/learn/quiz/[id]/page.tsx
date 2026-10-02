@@ -46,9 +46,10 @@ export default async function QuizPage({ params }: { params: Promise<{ id: strin
             return (
               <Card key={i} className="space-y-3">
                 <div className="flex gap-2 font-medium">
-                  <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md ${right ? 'bg-primary text-primary-fg' : 'border border-danger/50 text-danger'}`}>
+                  <span aria-hidden className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md ${right ? 'bg-primary text-primary-fg' : 'border border-danger/50 text-danger'}`}>
                     <Icon name={right ? 'check' : 'x'} className="size-3" />
                   </span>
+                  <span className="sr-only">{right ? t.quiz.gotRight : t.quiz.gotWrong}:</span>
                   <Markdown>{x.question}</Markdown>
                 </div>
                 <ol className="space-y-1.5">
@@ -59,8 +60,8 @@ export default async function QuizPage({ params }: { params: Promise<{ id: strin
                     >
                       <span className="font-mono text-xs leading-6 text-subtle">{String.fromCharCode(65 + j)}</span>
                       <div className="min-w-0 flex-1"><Markdown>{o}</Markdown></div>
+                      {j === chosen && <Badge tone={j === x.answer ? 'ok' : 'danger'}>{t.quiz.yourAnswer}</Badge>}
                       {j === x.answer && <Badge tone="ok">{t.quiz.correct}</Badge>}
-                      {j === chosen && j !== x.answer && <Badge tone="danger">{t.quiz.yourAnswer}</Badge>}
                     </li>
                   ))}
                 </ol>

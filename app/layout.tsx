@@ -3,14 +3,17 @@ import { cookies } from 'next/headers';
 import { Inter, Noto_Sans_Sinhala, JetBrains_Mono } from 'next/font/google';
 import 'katex/dist/katex.min.css';
 import './globals.css';
-import { getPrefs } from '@/lib/prefs';
+import { getPrefs, getT } from '@/lib/prefs';
 import { PrefsProvider } from '@/app/ui/prefs';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const sinhala = Noto_Sans_Sinhala({ subsets: ['sinhala'], weight: ['400', '500', '600', '700'], variable: '--font-sinhala' });
 const mono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-mono-jb' });
 
-export const metadata: Metadata = { title: 'A/L Tutor', description: 'A/L study assistant' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT();
+  return { title: t.common.brand, description: t.common.description };
+}
 export const viewport: Viewport = {
   themeColor: [{ media: '(prefers-color-scheme: light)', color: '#fafafa' }, { media: '(prefers-color-scheme: dark)', color: '#0a0a0b' }],
 };
