@@ -16,6 +16,8 @@ async function main() {
       installed_at timestamptz not null default now(),
       execution_ms int not null
     )`;
+  // Like every table in V001: RLS with no policies keeps the public Data API out.
+  await sql`alter table schema_history enable row level security`;
   const names = (await readdir(DIR)).sort();
   const files = await Promise.all(names.map(async (n) => toMigration(n, await readFile(`${DIR}/${n}`, 'utf8'))));
   const applied = await sql<Applied[]>`select version, checksum from schema_history`;
