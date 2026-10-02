@@ -1,7 +1,8 @@
-import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import type { Role } from '@/lib/roles';
+import { getT } from '@/lib/prefs';
+import { ButtonLink, Empty, Icon, Input, PageHeader, btn } from '@/app/ui/ui';
 import RoleForm from './RoleForm';
 
 const PAGE = 50;
@@ -12,7 +13,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const q = String(sp.q ?? '').trim().slice(0, 100);
   const page = Math.max(1, Math.floor(Number(sp.page)) || 1);
   const like = `%${q.replace(/[\\%_]/g, '\\$&')}%`; // escape LIKE wildcards in the search text
-  const [users, subjects] = await Promise.all([
+  const [users, subjects, { t }] = await Promise.all([
     sql<{ id: string; name: string; email: string; role: Role; created_at: Date; subject_ids: string[] }[]>`
       select p.id, p.name, u.email, p.role, p.created_at,
              array(select t.subject_id from teacher_subjects t where t.teacher_id = p.id) as subject_ids
@@ -20,36 +21,45 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       where ${q === ''} or p.name ilike ${like} or u.email ilike ${like}
       order by p.created_at desc limit ${PAGE + 1} offset ${(page - 1) * PAGE}`,
     sql<{ id: string; name_en: string }[]>`select id, name_en from subjects order by name_en`,
+    getT(),
   ]);
+  const S = t.staff;
   const more = users.length > PAGE;
   const href = (p: number) => `/admin/users?${new URLSearchParams({ ...(q && { q }), page: String(p) })}`;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Users</h1>
-      <form className="flex gap-2">
-        <input name="q" defaultValue={q} placeholder="Search name or email" className="rounded border p-1 text-sm" />
-        <button className="rounded border px-3 text-sm">Search</button>
+    <>
+      <PageHeader title={S.users} description={S.usersSub} />
+      <form className="mb-3 flex gap-2">
+        <Input name="q" defaultValue={q} placeholder={S.searchPh} aria-label={S.searchPh} className="max-w-sm" />
+        <button className={btn('secondary')}>{t.common.search}</button>
       </form>
-      <p className="text-xs text-gray-600">Teachers manage documents, flags and chat logs for the ticked subjects only.</p>
-      <table className="w-full text-left text-sm">
-        <thead><tr className="border-b"><th>Name</th><th>Email</th><th>Joined</th><th>Role &amp; subjects</th></tr></thead>
-        <tbody>
-          {users.slice(0, PAGE).map((u) => (
-            <tr key={u.id} className="border-b align-top">
-              <td className="py-2">{u.name || '—'}</td>
-              <td>{u.email}</td>
-              <td>{u.created_at.toLocaleDateString('en-LK', { timeZone: 'Asia/Colombo' })}</td>
-              <td><RoleForm id={u.id} role={u.role} subjectIds={u.subject_ids} subjects={[...subjects]} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {!users.length && <p className="text-gray-600">No users found.</p>}
-      <nav className="flex gap-4 text-sm">
-        {page > 1 && <Link href={href(page - 1)} className="text-blue-600">← Newer</Link>}
-        {more && <Link href={href(page + 1)} className="text-blue-600">Older →</Link>}
+      <p className="mb-4 text-xs text-subtle">{S.teacherHint}</p>
+      {!users.length ? <Empty>{S.noUsers}</Empty> : (
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                {[S.name, S.email, S.joinedOn, S.roleSubjects].map((h) => <th key={h} className="caps px-4 py-2.5 font-normal text-subtle">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {users.slice(0, PAGE).map((u) => (
+                <tr key={u.id} className="align-top">
+                  <td className="px-4 py-3 font-medium">{u.name || '—'}</td>
+                  <td className="px-4 py-3 text-muted">{u.email}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-subtle">{u.created_at.toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })}</td>
+                  <td className="px-4 py-2"><RoleForm id={u.id} role={u.role} subjectIds={u.subject_ids} subjects={[...subjects]} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <nav className="mt-4 flex gap-2">
+        {page > 1 && <ButtonLink href={href(page - 1)} variant="ghost" size="sm"><Icon name="arrowLeft" /> {S.newer}</ButtonLink>}
+        {more && <ButtonLink href={href(page + 1)} variant="ghost" size="sm">{S.older} <Icon name="arrowRight" /></ButtonLink>}
       </nav>
-    </div>
+    </>
   );
 }

@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation';
 import { requireStaff, requireLesson } from '@/lib/auth';
 import { isUuid } from '@/lib/db';
 import { editorData } from '@/lib/lessons';
+import { getT } from '@/lib/prefs';
+import { ButtonLink, Icon, Notice, PageHeader } from '@/app/ui/ui';
+import ConfirmButton from '@/app/ui/ConfirmButton';
 import { deleteLessonAction } from '../../lesson-actions';
-import ConfirmButton from '../../ConfirmButton';
 import LessonEditor from '../LessonEditor';
 
 export default async function EditLessonPage({ params, searchParams }: {
@@ -14,24 +16,29 @@ export default async function EditLessonPage({ params, searchParams }: {
   const { id } = await params;
   if (!isUuid(id)) notFound();
   const { subject_id, unit_id } = await requireLesson(user, id);
-  const [data, { saved }] = await Promise.all([editorData(subject_id, id), searchParams]);
+  const [data, { saved }, { t }] = await Promise.all([editorData(subject_id, id), searchParams, getT()]);
   if (!data.lesson) notFound();
+  const S = t.staff;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="mr-auto text-xl font-semibold">Edit lesson</h1>
-        {saved && <span role="status" className="text-sm text-green-700">Saved.</span>}
-        {data.lesson.published && <Link href={`/learn/lesson/${id}`} className="text-sm text-blue-600">View as student</Link>}
-        <Link href={`/admin/lessons?subject=${subject_id}`} className="text-sm text-blue-600">← All lessons</Link>
-      </div>
+    <>
+      <Link href={`/admin/lessons?subject=${subject_id}`} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
+        <Icon name="arrowLeft" /> {S.allLessons}
+      </Link>
+      <PageHeader
+        title={S.editLesson}
+        actions={data.lesson.published && (
+          <ButtonLink href={`/learn/lesson/${id}`} variant="ghost" size="sm">{S.viewAsStudent} <Icon name="external" className="size-3.5" /></ButtonLink>
+        )}
+      />
+      {saved && <div className="mb-4"><Notice tone="ok">{t.common.saved}</Notice></div>}
       <LessonEditor key={id} units={data.units} docs={data.docs} lesson={data.lesson} pages={data.pages} unitId={unit_id} />
-      <form action={deleteLessonAction} className="border-t pt-3">
+      <form action={deleteLessonAction} className="mt-8 border-t border-border pt-4">
         <input type="hidden" name="id" value={id} />
-        <ConfirmButton message="Delete this lesson? Students' progress on it is deleted too." className="text-sm text-red-600 underline">
-          Delete lesson
+        <ConfirmButton message={S.confirmDeleteLesson} className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-danger hover:underline">
+          <Icon name="trash" className="size-3.5" /> {S.deleteLesson}
         </ConfirmButton>
       </form>
-    </div>
+    </>
   );
 }

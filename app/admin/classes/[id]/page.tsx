@@ -1,15 +1,19 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireStaff, requireClass } from '@/lib/auth';
 import { sql, isUuid } from '@/lib/db';
 import { getClassDetail } from '@/lib/classes';
 import { formatCode } from '@/lib/joincode';
+import { getT } from '@/lib/prefs';
+import { fmt } from '@/lib/i18n';
+import { Badge, Card, Icon, Label, PageHeader, Select, Textarea, btn } from '@/app/ui/ui';
+import ConfirmButton from '@/app/ui/ConfirmButton';
 import {
   postAnnouncementAction, reassignTeacherAction, regenerateCodeAction, archiveClassAction,
   removeMemberAction, deleteAnnouncementAction,
 } from '../../class-actions';
 import MessageForm from '../../MessageForm';
 import CopyCode from './CopyCode';
-import ConfirmButton from '../../ConfirmButton';
 
 const when = (d: Date) => d.toLocaleString('en-LK', { timeZone: 'Asia/Colombo' });
 
@@ -18,8 +22,9 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   if (!isUuid(id)) notFound();
   await requireClass(user, id);
-  const c = await getClassDetail(id);
+  const [c, { t }] = await Promise.all([getClassDetail(id), getT()]);
   if (!c) notFound();
+  const S = t.staff;
   const isAdmin = user.role === 'admin';
   const teachers = isAdmin ? await sql<{ id: string; name: string }[]>`
     select p.id, p.name from profiles p join teacher_subjects ts on ts.teacher_id = p.id
@@ -27,84 +32,104 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const code = formatCode(c.join_code);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">{c.name}{c.archived && ' (archived)'}</h1>
-        <p className="text-sm text-gray-600">{c.subject} · batch {c.batch_year ?? '—'} · teacher {c.teacher ?? '—'}</p>
-      </div>
+    <>
+      <Link href="/admin/classes" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
+        <Icon name="arrowLeft" /> {S.classes}
+      </Link>
+      <PageHeader
+        eyebrow={c.subject}
+        title={<>{c.name} {c.archived && <Badge className="align-middle">{S.archived}</Badge>}</>}
+        description={<>{S.batch} <span className="font-mono">{c.batch_year ?? '—'}</span> · {fmt(S.teacherOf, { name: c.teacher ?? '—' })}</>}
+        actions={
+          <form action={archiveClassAction}>
+            <input type="hidden" name="classId" value={c.id} />
+            <input type="hidden" name="archived" value={c.archived ? '0' : '1'} />
+            <button className={btn('secondary', 'sm')}>{c.archived ? S.unarchive : S.archive}</button>
+          </form>
+        }
+      />
 
-      <section className="flex flex-wrap items-center gap-3 rounded border p-3">
-        <span className="text-sm text-gray-600">Join code</span>
-        <span className="font-mono text-2xl tracking-widest">{code}</span>
-        <CopyCode code={code} />
-        <form action={regenerateCodeAction}>
-          <input type="hidden" name="classId" value={c.id} />
-          <button className="rounded border px-2 py-1 text-sm">Regenerate (old code stops working)</button>
-        </form>
-        <form action={archiveClassAction} className="ml-auto">
-          <input type="hidden" name="classId" value={c.id} />
-          <input type="hidden" name="archived" value={c.archived ? '0' : '1'} />
-          <button className="rounded border px-2 py-1 text-sm">{c.archived ? 'Unarchive' : 'Archive'}</button>
-        </form>
-      </section>
+      <Card className="mb-6 flex flex-wrap items-center gap-4">
+        <div>
+          <Label>{S.joinCode}</Label>
+          <p className="font-mono text-3xl font-semibold tracking-[0.2em]">{code}</p>
+        </div>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <CopyCode code={code} />
+          <form action={regenerateCodeAction}>
+            <input type="hidden" name="classId" value={c.id} />
+            <button className={btn('ghost', 'sm')} title={S.regenerateHint}><Icon name="refresh" className="size-3.5" /> {S.regenerate}</button>
+          </form>
+        </div>
+      </Card>
 
       {isAdmin && (
-        <MessageForm action={reassignTeacherAction} submit="Change teacher" className="flex flex-wrap items-center gap-2">
+        <MessageForm action={reassignTeacherAction} submit={S.changeTeacher} className="mb-6 flex flex-wrap items-center gap-2">
           <input type="hidden" name="classId" value={c.id} />
-          <select name="teacherId" defaultValue={c.teacher_id ?? user.id} className="rounded border p-1 text-sm" aria-label="Teacher">
-            <option value={user.id}>Me (admin)</option>
-            {teachers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
+          <Select name="teacherId" defaultValue={c.teacher_id ?? ''} required className="min-h-9 py-1" aria-label={S.teacher}>
+            <option value="" disabled>—</option>
+            <option value={user.id}>{S.me}</option>
+            {c.teacher_id && c.teacher_id !== user.id && !teachers.some((x) => x.id === c.teacher_id) && (
+              <option value={c.teacher_id} disabled>{c.teacher ?? '—'}</option>
+            )}
+            {teachers.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+          </Select>
         </MessageForm>
       )}
 
-      <section className="space-y-2">
-        <h2 className="font-semibold">Announcements</h2>
-        {!c.archived && (
-          <MessageForm action={postAnnouncementAction} submit="Post" className="space-y-2">
-            <input type="hidden" name="classId" value={c.id} />
-            <textarea name="body" required maxLength={2000} rows={3} placeholder="Message to the class" className="w-full rounded border p-2 text-sm" />
-          </MessageForm>
-        )}
-        {c.posts.map((p) => (
-          <div key={p.id} className="rounded border p-2 text-sm">
-            <p className="text-xs text-gray-500">{when(p.created_at)} · {p.author ?? '—'}</p>
-            <p className="whitespace-pre-wrap">{p.body}</p>
-            {(isAdmin || p.created_by === user.id) && (
-              <form action={deleteAnnouncementAction}>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="space-y-3">
+          <Label>{S.announcements}</Label>
+          {!c.archived && (
+            <Card>
+              <MessageForm action={postAnnouncementAction} submit={S.post} className="space-y-2">
                 <input type="hidden" name="classId" value={c.id} />
-                <input type="hidden" name="postId" value={p.id} />
-                <button className="text-xs text-gray-500 underline">Delete</button>
-              </form>
-            )}
-          </div>
-        ))}
-        {!c.posts.length && <p className="text-sm text-gray-600">No announcements yet.</p>}
-      </section>
+                <Textarea name="body" required maxLength={2000} rows={3} placeholder={S.messagePh} aria-label={S.messagePh} />
+              </MessageForm>
+            </Card>
+          )}
+          {c.posts.map((p) => (
+            <Card key={p.id} className="space-y-1 py-3">
+              <div className="flex items-center gap-2">
+                <p className="mr-auto font-mono text-xs text-subtle">{when(p.created_at)} · {p.author ?? '—'}</p>
+                {(isAdmin || p.created_by === user.id) && (
+                  <form action={deleteAnnouncementAction}>
+                    <input type="hidden" name="classId" value={c.id} />
+                    <input type="hidden" name="postId" value={p.id} />
+                    <button aria-label={t.common.delete} className="cursor-pointer rounded p-1 text-subtle hover:text-danger"><Icon name="trash" className="size-3.5" /></button>
+                  </form>
+                )}
+              </div>
+              <p className="whitespace-pre-wrap text-sm">{p.body}</p>
+            </Card>
+          ))}
+          {!c.posts.length && <p className="text-sm text-subtle">{S.noAnnouncements}</p>}
+        </section>
 
-      <section className="space-y-2">
-        <h2 className="font-semibold">Students ({c.members.length})</h2>
-        <table className="w-full text-left text-sm">
-          <thead><tr className="border-b"><th>Name</th><th>Email</th><th>Joined</th><th /></tr></thead>
-          <tbody>
-            {c.members.map((m) => (
-              <tr key={m.id} className="border-b">
-                <td className="py-1">{m.name || '—'}</td>
-                <td>{m.email}</td>
-                <td>{m.joined.toLocaleDateString('en-LK', { timeZone: 'Asia/Colombo' })}</td>
-                <td>
+        <section className="space-y-3">
+          <Label>{S.students} <span className="font-mono">({c.members.length})</span></Label>
+          <Card className="p-0">
+            {!c.members.length && <p className="p-4 text-sm text-subtle">{S.noStudents}</p>}
+            <ul className="divide-y divide-border">
+              {c.members.map((m) => (
+                <li key={m.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                  <div className="mr-auto min-w-0">
+                    <p className="truncate font-medium">{m.name || '—'}</p>
+                    <p className="truncate text-xs text-subtle">{m.email} · <span className="font-mono">{m.joined.toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })}</span></p>
+                  </div>
                   <form action={removeMemberAction}>
                     <input type="hidden" name="classId" value={c.id} />
                     <input type="hidden" name="studentId" value={m.id} />
-                    <ConfirmButton message={`Remove ${m.name || m.email} from this class?`} className="text-xs text-red-600 underline">Remove</ConfirmButton>
+                    <ConfirmButton message={fmt(S.confirmRemove, { name: m.name || m.email })} className="cursor-pointer text-xs text-subtle hover:text-danger">
+                      {S.remove}
+                    </ConfirmButton>
                   </form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!c.members.length && <p className="text-sm text-gray-600">No students yet. Share the join code.</p>}
-      </section>
-    </div>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+      </div>
+    </>
   );
 }

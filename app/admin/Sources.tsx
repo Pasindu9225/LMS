@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { sql } from '@/lib/db';
+import { getT } from '@/lib/prefs';
 
 type Chunk = { id: string; page_no: number; content: string; title: string; document_id: string };
 
@@ -12,16 +14,24 @@ export async function loadChunks(ids: string[]): Promise<Map<string, Chunk>> {
 }
 
 /** The retrieved sources of one answer, numbered as the answer cites them. */
-export default function Sources({ ids, byId }: { ids: string[]; byId: Map<string, Chunk> }) {
+export default async function Sources({ ids, byId }: { ids: string[]; byId: Map<string, Chunk> }) {
+  if (!ids.length) return null;
+  const { t } = await getT();
   return (
-    <ol className="mt-2 space-y-1 border-t pt-2 text-xs text-gray-700">
+    <ol className="space-y-1.5 border-t border-dashed border-border-strong pt-3 text-xs">
       {ids.map((id, i) => {
         const c = byId.get(id);
         return (
-          <li key={id}>
-            [{i + 1}] {c ? (
-              <><a href={`/admin/documents/${c.document_id}`} className="text-blue-600">{c.title}, page {c.page_no}</a>: {c.content.slice(0, 200)}…</>
-            ) : '(chunk since re-indexed)'}
+          <li key={id} className="flex gap-2">
+            <span className="font-mono text-subtle">[{i + 1}]</span>
+            {c ? (
+              <span className="min-w-0 text-muted">
+                <Link href={`/admin/documents/${c.document_id}`} className="font-medium text-fg hover:text-accent">
+                  {c.title} · {t.common.page} {c.page_no}
+                </Link>{' '}
+                {c.content.slice(0, 200)}…
+              </span>
+            ) : <span className="text-subtle">{t.staff.chunkGone}</span>}
           </li>
         );
       })}

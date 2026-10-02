@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { requireStaff, subjectScope } from '@/lib/auth';
 import { listFlags } from '@/lib/flags';
 import type { FlagStatus } from '@/lib/text';
+import { getT } from '@/lib/prefs';
+import { fmt } from '@/lib/i18n';
+import { Card, Empty, Icon, Label, PageHeader, Textarea, btn } from '@/app/ui/ui';
 import { replyToFlag, dismissFlagAction } from '../actions';
 import Sources, { loadChunks } from '../Sources';
 
@@ -13,47 +16,55 @@ export default async function FlagsPage({ searchParams }: { searchParams: Promis
   const scope = await subjectScope(user);
   const { status: raw } = await searchParams;
   const status = STATUSES.find((s) => s === raw) ?? 'open';
-  const flags = await listFlags(status, scope);
+  const [flags, { t }] = await Promise.all([listFlags(status, scope), getT()]);
   const byId = await loadChunks(flags.flatMap((f) => f.chunk_ids));
+  const S = t.staff;
 
   return (
-    <div className="space-y-3">
-      <h1 className="text-xl font-semibold">Flagged answers</h1>
-      <nav className="flex gap-3 text-sm">
+    <>
+      <PageHeader title={S.flags} description={S.flagsSub} />
+      <nav aria-label={S.status} className="mb-6 inline-flex rounded-lg border border-border bg-surface p-1">
         {STATUSES.map((s) => (
-          <Link key={s} href={`/admin/flags?status=${s}`} className={s === status ? 'font-semibold' : 'text-blue-600'}>{s}</Link>
+          <Link
+            key={s} href={`/admin/flags?status=${s}`} aria-current={s === status ? 'page' : undefined}
+            className={`min-h-8 rounded-md px-3 py-1.5 text-sm ${s === status ? 'bg-surface-2 font-medium text-fg' : 'text-muted hover:text-fg'}`}
+          >{S[s]}</Link>
         ))}
       </nav>
-      {scope?.length === 0 && <p className="text-gray-600">No subjects assigned yet. Ask an admin.</p>}
-      {!flags.length && <p className="text-gray-600">No {status} flags.</p>}
-      {flags.map((f) => (
-        <div key={f.id} className="space-y-2 rounded border p-3 text-sm">
-          <p className="text-gray-500">{when(f.flagged_at)} · {f.student} · {f.subject ?? '—'}</p>
-          <p className="font-medium">{f.question}</p>
-          <p className="whitespace-pre-wrap rounded bg-gray-50 p-2">{f.answer}</p>
-          {f.flag_note && <p className="whitespace-pre-wrap"><b>Student note:</b> {f.flag_note}</p>}
-          <Sources ids={f.chunk_ids} byId={byId} />
-          {status !== 'dismissed' && (
-            <form action={replyToFlag} className="space-y-2">
-              <input type="hidden" name="id" value={f.id} />
-              <textarea
-                name="reply" required maxLength={4000} rows={3} defaultValue={f.reply ?? ''}
-                placeholder="Reply to the student (shown under their answer)" className="w-full rounded border p-2"
-              />
-              <div className="flex items-center gap-3">
-                <button className="rounded bg-blue-600 px-3 py-1 text-white">{f.reply ? 'Update reply' : 'Send reply'}</button>
-                {f.replied_at && <span className="text-xs text-gray-500">Replied {when(f.replied_at)}</span>}
+      {scope?.length === 0 && <div className="mb-4"><Empty>{S.noSubjectsAssigned}</Empty></div>}
+      {!flags.length && <Empty>{fmt(S.noFlags, { status: S[status].toLowerCase() })}</Empty>}
+      <div className="space-y-4">
+        {flags.map((f) => (
+          <Card key={f.id} className="space-y-3">
+            <p className="font-mono text-xs text-subtle">{when(f.flagged_at)} · {f.student} · {f.subject ?? '—'}</p>
+            <p className="font-medium">{f.question}</p>
+            <p className="whitespace-pre-wrap rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">{f.answer}</p>
+            {f.flag_note && (
+              <div className="rounded-lg border-l-2 border-warn bg-warn-soft px-3 py-2 text-sm">
+                <Label className="mb-0.5">{S.studentNote}</Label>
+                <p className="whitespace-pre-wrap">{f.flag_note}</p>
               </div>
-            </form>
-          )}
-          {status === 'open' && (
-            <form action={dismissFlagAction}>
-              <input type="hidden" name="id" value={f.id} />
-              <button className="text-gray-600 underline">Dismiss</button>
-            </form>
-          )}
-        </div>
-      ))}
-    </div>
+            )}
+            <Sources ids={f.chunk_ids} byId={byId} />
+            {status !== 'dismissed' && (
+              <form action={replyToFlag} className="space-y-2 border-t border-border pt-3">
+                <input type="hidden" name="id" value={f.id} />
+                <Textarea name="reply" required maxLength={4000} rows={3} defaultValue={f.reply ?? ''} placeholder={S.replyPh} aria-label={S.reply} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <button className={btn('primary', 'sm')}><Icon name="send" /> {f.reply ? S.updateReply : S.sendReply}</button>
+                  {f.replied_at && <span className="font-mono text-xs text-subtle">{fmt(S.replied, { at: when(f.replied_at) })}</span>}
+                </div>
+              </form>
+            )}
+            {status === 'open' && (
+              <form action={dismissFlagAction}>
+                <input type="hidden" name="id" value={f.id} />
+                <button className={btn('ghost', 'sm')}>{S.dismiss}</button>
+              </form>
+            )}
+          </Card>
+        ))}
+      </div>
+    </>
   );
 }
