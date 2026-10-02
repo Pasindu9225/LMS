@@ -68,3 +68,9 @@ Design: `docs/superpowers/specs/2026-09-26-rag-chatbot-design.md` · Plan: `docs
 
 - Staff create classes at `/admin/classes` (teachers: own subjects, as themselves; admins: any subject, any assigned teacher). Each class has a join code (`XXXX-XXXX`, no O/0/I/1), a roster and announcements; archive closes joins and posting.
 - Students join at `/classes` (link in the chat header) and read their classes' announcements. Classes group students; they do not limit which subjects the tutor answers.
+
+### Lessons and past papers
+
+- Staff write lessons per unit at `/admin/lessons` (scoped to their subjects): Markdown notes with LaTeX and a live preview, an optional YouTube link (any normal link format; played via youtube-nocookie), and links to textbook page ranges of this subject's documents. Drafts are staff-only.
+- Students browse `/learn` → subject → lesson, mark lessons done and see progress per subject and unit. Each subject page lists live past papers next to their marking schemes by year. Lessons are not used by the AI tutor.
+- A unit with lessons can't be deleted.

@@ -9,7 +9,7 @@ import { replyFlag, dismissFlag } from '@/lib/flags';
 import { cleanReply } from '@/lib/text';
 import { ROLES, type Role } from '@/lib/roles';
 import { setUserRole } from '@/lib/users';
-import { deleteSubjectIfUnused } from '@/lib/subjects';
+import { deleteSubjectIfUnused, deleteUnitIfUnused } from '@/lib/subjects';
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
 function need(ok: unknown, msg: string): asserts ok {
@@ -52,10 +52,10 @@ export async function saveUnit(fd: FormData) {
 }
 
 export async function deleteUnit(fd: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const id = str(fd, 'id');
   need(isUuid(id), 'Bad id');
-  await sql`delete from units where id = ${id}`;
+  await deleteUnitIfUnused(admin.id, id); // units with lessons are kept; the UI hides Delete for them
   revalidatePath('/admin/subjects');
 }
 

@@ -2,9 +2,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+import Markdown from '@/app/Markdown';
 import { linkCitations, titleFrom, colomboDate, flagView, type FlagStatus } from '@/lib/text';
 import { t, type Lang } from '@/lib/i18n';
 import type { Source, StoredTurn, ConversationItem } from '@/lib/conversations';
@@ -190,6 +188,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
         <header className="flex flex-wrap items-center gap-2 border-b p-3">
           <button onClick={() => setShowHistory(true)} className="rounded border px-2 py-1 text-sm md:hidden">{L.history}</button>
           <h1 className="mr-auto font-semibold">{L.title}</h1>
+          <Link href="/learn" className="text-sm text-blue-600">{L.lessons}</Link>
           <Link href="/classes" className="text-sm text-blue-600">{L.classes}</Link>
           <select
             aria-label={L.subject} value={subjectId} className="rounded border p-1 text-sm"
@@ -212,19 +211,16 @@ export default function Chat({ subjects, conversations, conversationId, initialT
           ) : (
             <div key={i} className="max-w-[95%] rounded-lg bg-gray-100 p-3">
               {m.text ? (
-                <div className="md">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}
-                    components={{
-                      a: ({ href, children }) => {
-                        const n = href?.match(/^#src-(\d+)$/)?.[1];
-                        if (!n) return <a href={href} target="_blank" rel="noreferrer">{children}</a>;
-                        const s = m.sources[Number(n) - 1];
-                        return s ? <a href={pdfUrl(s)} target="_blank" rel="noreferrer">{children}</a> : <span>{children}</span>;
-                      },
-                    }}
-                  >{linkCitations(m.text, m.sources.length)}</ReactMarkdown>
-                </div>
+                <Markdown
+                  components={{
+                    a: ({ href, children }) => {
+                      const n = href?.match(/^#src-(\d+)$/)?.[1];
+                      if (!n) return <a href={href} target="_blank" rel="noreferrer">{children}</a>;
+                      const s = m.sources[Number(n) - 1];
+                      return s ? <a href={pdfUrl(s)} target="_blank" rel="noreferrer">{children}</a> : <span>{children}</span>;
+                    },
+                  }}
+                >{linkCitations(m.text, m.sources.length)}</Markdown>
               ) : <p className="text-gray-500">{L.thinking}</p>}
               {m.sources.length > 0 && (
                 <div className="mt-3 border-t pt-2">
