@@ -21,7 +21,7 @@ export default async function LessonsPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader title={S.lessons} description={S.lessonsSub} />
-      <nav aria-label={S.subjects} className="mb-6 flex flex-wrap gap-1 rounded-lg border border-border bg-surface p-1">
+      <nav aria-label={S.subjects} className="mb-6 flex flex-wrap gap-1 rounded-xl border border-border bg-surface p-1">
         {subjects.map((s) => (
           <Link
             key={s.id} href={`/admin/lessons?subject=${s.id}`} aria-current={s.id === subject.id ? 'page' : undefined}

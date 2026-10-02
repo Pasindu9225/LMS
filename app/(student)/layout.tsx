@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import { getT } from '@/lib/prefs';
-import { Icon } from '@/app/ui/ui';
+import { Icon, Logo } from '@/app/ui/ui';
 import { Dropdown, LangSwitch, NavLink, ThemeSwitch } from '@/app/ui/prefs';
 
 /** Student area: top bar (desktop) + bottom tabs (phones). The page owns the space below. */
@@ -21,7 +21,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
       <header className="relative z-20 shrink-0 border-b border-border bg-bg/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4">
           <Link href="/chat" className="mr-2 flex items-center gap-2 font-semibold tracking-tight">
-            <span aria-hidden className="size-4 rounded-[5px] bg-primary" />
+            <Logo />
             <span className="hidden sm:inline">{t.common.brand}</span>
           </Link>
           <nav aria-label={t.common.menu} className="hidden items-center gap-1 md:flex">
@@ -37,18 +37,18 @@ export default async function StudentLayout({ children }: { children: React.Reac
               >
                 {(profile?.name || user.email).slice(0, 1).toUpperCase()}
               </summary>
-              <div className="absolute right-0 z-20 mt-2 w-60 rounded-xl border border-border bg-surface p-2 shadow-lg shadow-black/10">
+              <div className="absolute right-0 z-20 mt-2 w-60 rounded-2xl border border-border bg-surface p-2 shadow-xl shadow-black/10">
                 <div className="px-2 py-1.5">
                   <p className="truncate text-sm font-medium">{profile?.name || '—'}</p>
                   <p className="truncate text-xs text-subtle">{user.email}</p>
                 </div>
                 {staff && (
-                  <Link href="/admin" className="flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm text-muted hover:bg-surface-2 hover:text-fg">
+                  <Link href="/admin" className="flex min-h-9 items-center gap-2 rounded-xl px-2 text-sm text-muted hover:bg-surface-2 hover:text-fg">
                     <Icon name="shield" /> {t.common.staffArea}
                   </Link>
                 )}
                 <form action="/auth/signout" method="post">
-                  <button className="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-muted hover:bg-surface-2 hover:text-fg">
+                  <button className="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-xl px-2 text-sm text-muted hover:bg-surface-2 hover:text-fg">
                     <Icon name="logout" /> {t.common.logout}
                   </button>
                 </form>

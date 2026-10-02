@@ -18,7 +18,7 @@ export default async function LearnPage() {
           const pct = s.total ? Math.round((100 * s.done) / s.total) : 0;
           return (
             <li key={s.id}>
-              <Link href={`/learn/${s.id}`} className="group block rounded-xl border border-border bg-surface p-4 transition-colors hover:border-border-strong">
+              <Link href={`/learn/${s.id}`} className="group block rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-border-strong">
                 <div className="flex items-start gap-2">
                   <div className="mr-auto min-w-0">
                     <p className="truncate font-medium">{lang === 'si' ? s.name_si : s.name_en}</p>
@@ -28,7 +28,7 @@ export default async function LearnPage() {
                   <Icon name="arrowRight" className="size-4 text-subtle transition-transform group-hover:translate-x-0.5" />
                 </div>
                 <div className="mt-4 h-1 rounded-full bg-surface-2" role="progressbar" aria-valuenow={s.done} aria-valuemin={0} aria-valuemax={s.total}>
-                  <div className="h-1 rounded-full bg-accent" style={{ width: `${pct}%` }} />
+                  <div className="h-1.5 rounded-full bg-grad" style={{ width: `${pct}%` }} />
                 </div>
               </Link>
             </li>

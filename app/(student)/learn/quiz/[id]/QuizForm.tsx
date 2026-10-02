@@ -26,7 +26,7 @@ export default function QuizForm({ quizId, questions }: { quizId: string; questi
             {q.options.map((o, j) => (
               <label
                 key={j}
-                className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border px-3 py-2.5 transition-colors hover:border-border-strong has-[:checked]:border-accent has-[:checked]:bg-accent-soft"
+                className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-border px-3 py-2.5 transition-colors hover:border-border-strong has-[:checked]:border-accent has-[:checked]:bg-accent-soft"
               >
                 <input type="radio" name={`q${i}`} value={j} required className="mt-1 accent-[var(--accent)]" />
                 <span className="font-mono text-xs leading-6 text-subtle">{String.fromCharCode(65 + j)}</span>

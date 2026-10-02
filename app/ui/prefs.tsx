@@ -27,11 +27,11 @@ export function useT(): { lang: Lang; t: T } {
   return { lang, t: dict[lang] };
 }
 
-const seg = 'inline-flex items-center rounded-full border border-border-strong bg-surface p-0.5';
+const seg = 'inline-flex items-center rounded-full border border-border bg-surface p-0.5 shadow-card';
 const segBtn = (on: boolean) =>
   `inline-flex min-h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs transition-colors cursor-pointer ` +
   `focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent ` +
-  (on ? 'bg-fg font-semibold text-bg' : 'text-muted hover:text-fg');
+  (on ? 'bg-grad font-semibold text-white' : 'text-muted hover:text-fg');
 
 export function LangSwitch() {
   const { lang, t } = useT();
@@ -76,9 +76,9 @@ export function NavLink({ href, icon, label, exact, variant = 'top' }: { href: s
   const path = usePathname();
   const on = exact ? path === href : path === href || path.startsWith(`${href}/`);
   const styles = {
-    top: `inline-flex min-h-9 items-center gap-2 rounded-lg px-3 text-sm transition-colors ${on ? 'bg-surface-2 text-fg' : 'text-muted hover:text-fg'}`,
-    side: `flex min-h-9 items-center gap-2.5 rounded-lg px-3 text-sm transition-colors ${on ? 'bg-surface-2 text-fg shadow-[inset_2px_0_0_var(--accent)]' : 'text-muted hover:bg-surface-2 hover:text-fg'}`,
-    tab: `flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] ${on ? 'text-fg' : 'text-subtle'}`,
+    top: `inline-flex min-h-9 items-center gap-2 rounded-full px-4 text-sm font-medium transition ${on ? 'bg-surface text-fg shadow-card' : 'text-muted hover:bg-surface-2 hover:text-fg'}`,
+    side: `flex min-h-10 items-center gap-2.5 rounded-full px-4 text-sm font-medium transition ${on ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-fg'}`,
+    tab: `flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium ${on ? 'text-accent' : 'text-subtle'}`,
   }[variant];
   return (
     <Link href={href} aria-current={on ? 'page' : undefined} className={`${styles} focus-visible:outline-2 focus-visible:outline-accent`}>
