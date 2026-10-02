@@ -8,7 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import { linkCitations, titleFrom, colomboDate, flagView, type FlagStatus } from '@/lib/text';
 import { t, type Lang } from '@/lib/i18n';
 import type { Source, StoredTurn, ConversationItem } from '@/lib/conversations';
-import { deleteChat, flagChat } from './actions';
+import { deleteChat, flagChat, markSeen } from './actions';
 
 type Subject = { id: string; name_si: string; name_en: string };
 type Msg = {
@@ -68,6 +68,13 @@ export default function Chat({ subjects, conversations, conversationId, initialT
   }, [msgs]);
 
   const inFlight = useRef(false);
+
+  // Mount only: these are the replies this screen shows. A later router.refresh() brings new
+  // props that useState ignores, so marking from props there would hide replies never displayed.
+  useEffect(() => {
+    const ids = initialTurns.filter((x) => x.flagStatus === 'answered').map((x) => x.id);
+    if (ids.length) markSeen(ids).catch(() => { /* the dot simply stays until next time */ });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Move a conversation to the top of the sidebar, adding it if new.
   const touch = (id: string, title: string) => setConvs((cs) => [

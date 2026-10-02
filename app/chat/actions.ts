@@ -2,7 +2,7 @@
 import { requireUser } from '@/lib/auth';
 import { isUuid } from '@/lib/db';
 import { deleteConversation } from '@/lib/conversations';
-import { flagAnswer } from '@/lib/flags';
+import { flagAnswer, markRepliesSeen } from '@/lib/flags';
 import { cleanNote } from '@/lib/text';
 
 export async function deleteChat(id: string) {
@@ -17,4 +17,11 @@ export async function flagChat(logId: string, note: string): Promise<boolean> {
   const clean = cleanNote(note);
   if (!isUuid(logId) || clean === null) return false;
   return flagAnswer(user.id, logId, clean);
+}
+
+/** Called by the chat once it has displayed these answers' replies. */
+export async function markSeen(logIds: string[]) {
+  const user = await requireUser();
+  if (!Array.isArray(logIds) || logIds.length > 200 || !logIds.every(isUuid)) return;
+  await markRepliesSeen(user.id, logIds);
 }

@@ -24,11 +24,15 @@ export async function dismissFlag(adminId: string, logId: string): Promise<boole
   return r.count === 1;
 }
 
-/** Clears the sidebar dot for one of the student's conversations. */
-export async function markRepliesSeen(userId: string, conversationId: string) {
+/**
+ * Marks replies the student's screen actually showed (by answer id) as seen, clearing the sidebar dot.
+ * Not by conversation: a refresh can load a reply that the open tab never displays.
+ */
+export async function markRepliesSeen(userId: string, logIds: string[]) {
+  if (!logIds.length) return;
   await asUser(userId, (tx) => tx`
     update chat_logs set reply_seen = true
-    where conversation_id = ${conversationId} and user_id = ${userId}
+    where id = any(${sql.array(logIds)}::uuid[]) and user_id = ${userId}
       and flag_status = 'answered' and not reply_seen`);
 }
 
