@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireAdmin } from '@/lib/auth';
+import { requireStaff, subjectScope } from '@/lib/auth';
 import { listFlags } from '@/lib/flags';
 import type { FlagStatus } from '@/lib/text';
 import { replyToFlag, dismissFlagAction } from '../actions';
@@ -9,10 +9,11 @@ const STATUSES: FlagStatus[] = ['open', 'answered', 'dismissed'];
 const when = (d: Date) => d.toLocaleString('en-LK', { timeZone: 'Asia/Colombo' });
 
 export default async function FlagsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  await requireAdmin();
+  const user = await requireStaff();
+  const scope = await subjectScope(user);
   const { status: raw } = await searchParams;
   const status = STATUSES.find((s) => s === raw) ?? 'open';
-  const flags = await listFlags(status);
+  const flags = await listFlags(status, scope);
   const byId = await loadChunks(flags.flatMap((f) => f.chunk_ids));
 
   return (
@@ -23,6 +24,7 @@ export default async function FlagsPage({ searchParams }: { searchParams: Promis
           <Link key={s} href={`/admin/flags?status=${s}`} className={s === status ? 'font-semibold' : 'text-blue-600'}>{s}</Link>
         ))}
       </nav>
+      {scope?.length === 0 && <p className="text-gray-600">No subjects assigned yet. Ask an admin.</p>}
       {!flags.length && <p className="text-gray-600">No {status} flags.</p>}
       {flags.map((f) => (
         <div key={f.id} className="space-y-2 rounded border p-3 text-sm">

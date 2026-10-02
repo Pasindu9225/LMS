@@ -1,21 +1,23 @@
-import { requireAdmin } from '@/lib/auth';
+import { requireStaff, subjectScope } from '@/lib/auth';
 import { sql } from '@/lib/db';
 import Sources, { loadChunks } from '../Sources';
 
 export default async function LogsPage() {
-  await requireAdmin();
+  const scope = await subjectScope(await requireStaff());
   const logs = await sql<{
     id: string; question: string; answer: string; chunk_ids: string[]; created_at: Date; student: string; subject: string | null;
     flag_status: string | null; reply: string | null;
   }[]>`
     select l.id, l.question, l.answer, l.chunk_ids, l.created_at, p.name as student, s.name_en as subject, l.flag_status, l.reply
     from chat_logs l join profiles p on p.id = l.user_id left join subjects s on s.id = l.subject_id
+    where ${scope === null} or l.subject_id = any(${sql.array(scope ?? [])}::uuid[])
     order by l.created_at desc limit 100`;
   const byId = await loadChunks(logs.flatMap((l) => l.chunk_ids));
 
   return (
     <div className="space-y-3">
       <h1 className="text-xl font-semibold">Recent chat questions</h1>
+      {scope?.length === 0 && <p className="text-gray-600">No subjects assigned yet. Ask an admin.</p>}
       {logs.map((l) => (
         <details key={l.id} className="rounded border p-3 text-sm">
           <summary className="cursor-pointer">
