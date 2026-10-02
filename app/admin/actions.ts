@@ -81,8 +81,8 @@ export async function createDocument(input: {
   need(year === null || (Number.isInteger(year) && year >= 1990 && year <= 2100), 'Bad year');
   need(/^uploads\/[0-9a-f-]{36}\.pdf$/.test(input.path), 'Bad upload path');
   await sql`
-    insert into documents (subject_id, title, doc_type, year, storage_path, uploaded_by)
-    values (${input.subjectId}, ${title}, ${input.docType}, ${year}, ${input.path}, ${admin.id})`;
+    insert into documents (subject_id, title, doc_type, year, storage_path)
+    values (${input.subjectId}, ${title}, ${input.docType}, ${year}, ${input.path})`;
   revalidatePath('/admin/documents');
 }
 
