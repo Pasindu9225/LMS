@@ -69,3 +69,11 @@ export async function requireClass(user: AppUser, classId: string) {
   if (!ok) notFound();
   return c;
 }
+
+/** 404 unless the lesson exists and its subject is in the staff member's scope. */
+export async function requireLesson(user: AppUser, lessonId: string) {
+  const [l] = await sql<{ subject_id: string; unit_id: string }[]>`
+    select u.subject_id, l.unit_id from lessons l join units u on u.id = l.unit_id where l.id = ${lessonId}`;
+  if (!l || !inScope(await subjectScope(user), l.subject_id)) notFound();
+  return l;
+}

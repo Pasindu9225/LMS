@@ -10,8 +10,10 @@ export default async function SubjectsPage() {
     select s.id, s.name_si, s.name_en, (select count(*)::int from documents d where d.subject_id = s.id) as docs,
            (select count(*)::int from classes c where c.subject_id = s.id) as classes
     from subjects s order by s.name_en`;
-  const units = await sql<{ id: string; subject_id: string; name_si: string; name_en: string; sort_order: number }[]>`
-    select id, subject_id, name_si, name_en, sort_order from units order by sort_order, name_en`;
+  const units = await sql<{ id: string; subject_id: string; name_si: string; name_en: string; sort_order: number; lessons: number }[]>`
+    select u.id, u.subject_id, u.name_si, u.name_en, u.sort_order,
+           (select count(*)::int from lessons l where l.unit_id = u.id) as lessons
+    from units u order by u.sort_order, u.name_en`;
 
   return (
     <div className="space-y-6">
@@ -51,10 +53,12 @@ export default async function SubjectsPage() {
                   <input name="name_en" defaultValue={u.name_en} required className={input} />
                   <button className="text-sm text-blue-600">Save</button>
                 </form>
-                <form action={deleteUnit}>
-                  <input type="hidden" name="id" value={u.id} />
-                  <button className="text-sm text-red-600">Delete</button>
-                </form>
+                {u.lessons === 0 ? (
+                  <form action={deleteUnit}>
+                    <input type="hidden" name="id" value={u.id} />
+                    <button className="text-sm text-red-600">Delete</button>
+                  </form>
+                ) : <span className="text-xs text-gray-500">{u.lessons} lessons</span>}
               </li>
             ))}
           </ul>

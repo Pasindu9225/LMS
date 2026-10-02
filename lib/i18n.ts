@@ -12,7 +12,7 @@ export const t = {
     confirmDelete: 'මෙම සංවාදය මකන්නද?', removed: 'ඉවත් කර ඇත',
     flag: '⚑ ගුරුවරයාගෙන් අසන්න', flagNote: 'ගැටලුව කුමක්ද? (අත්‍යවශ්‍ය නැත)', flagSend: 'යවන්න', flagCancel: 'අවලංගු කරන්න',
     flagSent: 'දැනටමත් යවා ඇත', flagWaiting: 'ගුරුවරයාගේ පිළිතුර බලාපොරොත්තුවෙන්', teacherReply: 'ගුරුවරයාගේ පිළිතුර',
-    flagReviewed: 'ගුරුවරයෙකු විසින් සමාලෝචනය කරන ලදී', classes: 'පන්ති',
+    flagReviewed: 'ගුරුවරයෙකු විසින් සමාලෝචනය කරන ලදී', classes: 'පන්ති', lessons: 'පාඩම්',
   },
   en: {
     title: 'A/L Tutor', subject: 'Subject', placeholder: 'Type your question…', send: 'Send',
@@ -25,6 +25,6 @@ export const t = {
     confirmDelete: 'Delete this conversation?', removed: 'removed',
     flag: '⚑ Ask a teacher', flagNote: "What's wrong? (optional)", flagSend: 'Send', flagCancel: 'Cancel',
     flagSent: 'Already sent', flagWaiting: "Waiting for a teacher's reply", teacherReply: "Teacher's reply",
-    flagReviewed: 'Reviewed by a teacher', classes: 'Classes',
+    flagReviewed: 'Reviewed by a teacher', classes: 'Classes', lessons: 'Lessons',
   },
 } satisfies Record<Lang, Record<string, string>>;
