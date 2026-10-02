@@ -10,6 +10,9 @@ export const t = {
     empty: 'විෂයයක් තෝරා ප්‍රශ්නයක් අසන්න. සිංහල, English හෝ Singlish භාවිතා කළ හැක.',
     newChat: 'නව සංවාදය', history: 'ඉතිහාසය', delete: 'මකන්න',
     confirmDelete: 'මෙම සංවාදය මකන්නද?', removed: 'ඉවත් කර ඇත',
+    flag: '⚑ ගුරුවරයාගෙන් අසන්න', flagNote: 'ගැටලුව කුමක්ද? (අත්‍යවශ්‍ය නැත)', flagSend: 'යවන්න', flagCancel: 'අවලංගු කරන්න',
+    flagSent: 'දැනටමත් යවා ඇත', flagWaiting: 'ගුරුවරයාගේ පිළිතුර බලාපොරොත්තුවෙන්', teacherReply: 'ගුරුවරයාගේ පිළිතුර',
+    flagReviewed: 'ගුරුවරයෙකු විසින් සමාලෝචනය කරන ලදී',
   },
   en: {
     title: 'A/L Tutor', subject: 'Subject', placeholder: 'Type your question…', send: 'Send',
@@ -20,5 +23,8 @@ export const t = {
     empty: 'Pick a subject and ask a question in Sinhala, English or Singlish.',
     newChat: 'New chat', history: 'History', delete: 'Delete',
     confirmDelete: 'Delete this conversation?', removed: 'removed',
+    flag: '⚑ Ask a teacher', flagNote: "What's wrong? (optional)", flagSend: 'Send', flagCancel: 'Cancel',
+    flagSent: 'Already sent', flagWaiting: "Waiting for a teacher's reply", teacherReply: "Teacher's reply",
+    flagReviewed: 'Reviewed by a teacher',
   },
 } satisfies Record<Lang, Record<string, string>>;
