@@ -1,4 +1,4 @@
-import { sql } from '@/lib/db';
+import { sql, asUser } from '@/lib/db';
 import { buildHistory, HISTORY_TURNS, type Turn } from '@/lib/text';
 
 export type Source = { n: number; documentId: string; title: string; unitSi: string | null; unitEn: string | null; page: number };
@@ -11,8 +11,8 @@ export const toSource = (n: number, c: ChunkRef): Source =>
   ({ n, documentId: c.document_id, title: c.title, unitSi: c.unit_si, unitEn: c.unit_en, page: c.page_no });
 
 export async function createConversation(userId: string, title: string): Promise<string> {
-  const [row] = await sql<{ id: string }[]>`
-    insert into conversations (user_id, title) values (${userId}, ${title}) returning id`;
+  const [row] = await asUser(userId, (tx) => tx<{ id: string }[]>`
+    insert into conversations (user_id, title) values (${userId}, ${title}) returning id`);
   return row.id;
 }
 
@@ -39,10 +39,10 @@ export async function getHistory(id: string): Promise<Turn[]> {
 export function logTurn(t: {
   userId: string; subjectId: string; conversationId: string; question: string; answer: string; chunkIds: string[];
 }) {
-  return sql`
+  return asUser(t.userId, (tx) => tx`
     with bump as (update conversations set updated_at = now() where id = ${t.conversationId})
     insert into chat_logs (user_id, subject_id, conversation_id, question, answer, chunk_ids)
-    values (${t.userId}, ${t.subjectId}, (select id from conversations where id = ${t.conversationId}), ${t.question}, ${t.answer}, ${sql.array(t.chunkIds)}::uuid[])`;
+    values (${t.userId}, ${t.subjectId}, (select id from conversations where id = ${t.conversationId}), ${t.question}, ${t.answer}, ${sql.array(t.chunkIds)}::uuid[])`);
 }
 
 export async function chatPageData(userId: string) {
@@ -80,5 +80,5 @@ export async function getMessages(userId: string, id: string): Promise<StoredTur
 }
 
 export async function deleteConversation(userId: string, id: string) {
-  await sql`delete from conversations where id = ${id} and user_id = ${userId}`;
+  await asUser(userId, (tx) => tx`delete from conversations where id = ${id} and user_id = ${userId}`);
 }
