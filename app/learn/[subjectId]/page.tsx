@@ -4,8 +4,14 @@ import { requireUser } from '@/lib/auth';
 import { isUuid } from '@/lib/db';
 import { subjectOutline } from '@/lib/lessons';
 import { groupPapers } from '@/lib/papers';
+import { quizUnits, recentQuizzes } from '@/lib/practice';
+import { colomboDate } from '@/lib/text';
+import QuizMeButton from '../QuizMeButton';
 
 const pdf = (id: string) => `/api/pdf/${id}?page=1`;
+
+// Quiz generation runs in a server action on this page and can take ~30 s when Gemini is slow.
+export const maxDuration = 60;
 
 export default async function SubjectPage({ params }: { params: Promise<{ subjectId: string }> }) {
   const user = await requireUser();
@@ -14,6 +20,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
   const outline = await subjectOutline(subjectId, user.id);
   if (!outline) notFound();
   const years = groupPapers(outline.papers);
+  const [units, recent] = await Promise.all([quizUnits(subjectId), recentQuizzes(user.id, subjectId)]);
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4">
@@ -42,6 +49,34 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
           </section>
         );
       })}
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">පුහුණු ප්‍රශ්නාවලි / Practice quizzes</h2>
+        <p className="text-sm text-gray-600">ඔබේ පොත් වලින් ප්‍රශ්න 5ක් / 5 questions from your textbooks.</p>
+        {!units.length && <p className="text-sm text-gray-600">තවම නැත / Not available yet.</p>}
+        <ul className="space-y-2">
+          {units.map((u) => (
+            <li key={u.id} className="flex flex-wrap items-center gap-2">
+              <span className="mr-auto">{u.name_si} / {u.name_en}</span>
+              <QuizMeButton unitId={u.id} />
+            </li>
+          ))}
+        </ul>
+        {recent.length > 0 && (
+          <div className="pt-2">
+            <h3 className="text-sm font-medium text-gray-700">මෑත / Recent</h3>
+            <ul className="text-sm">
+              {recent.map((r) => (
+                <li key={r.id}>
+                  <Link href={`/learn/quiz/${r.id}`} className="text-blue-600">
+                    {colomboDate(r.created_at.toISOString())} · {r.unit_si} / {r.unit_en} · {r.score === null ? 'not submitted' : `${r.score}/${r.total}`}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold">පසුගිය ප්‍රශ්න පත්‍ර / Past papers</h2>
