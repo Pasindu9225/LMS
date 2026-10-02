@@ -50,3 +50,10 @@ Design: `docs/superpowers/specs/2026-09-26-rag-chatbot-design.md` · Plan: `docs
 - Deleting a chat only unlinks its `chat_logs` rows (`on delete set null`), so the daily limit and admin logs are unaffected.
 - After pulling this change, run `npm run db:migrate`.
 - `eval/questions.json` entries may include `"history": [{ "question": "...", "answer": "..." }]` to evaluate follow-up retrieval.
+
+### Migrations and audit columns
+
+- Schema lives only in `db/migrations/V###__name.sql` (Flyway-style). `npm run db:migrate` applies pending files in order, each with its `schema_history` row in one transaction, and refuses to run if an applied file was edited (checksums ignore CRLF/LF).
+- New production database: create an empty Supabase project, set `DATABASE_URL`, run `npm run db:migrate`.
+- Every table has `created_at`, `created_by`, `updated_at`, `updated_by`, set by the `audit_stamp` trigger. App writes go through `asUser(userId, tx => …)` (`lib/db.ts`) so the trigger knows who acted; worker and indexing writes record `null` (system).
+- Deletes are not recorded.
