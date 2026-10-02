@@ -190,6 +190,7 @@ export default function Chat({ subjects, conversations, conversationId, initialT
         <header className="flex flex-wrap items-center gap-2 border-b p-3">
           <button onClick={() => setShowHistory(true)} className="rounded border px-2 py-1 text-sm md:hidden">{L.history}</button>
           <h1 className="mr-auto font-semibold">{L.title}</h1>
+          <Link href="/classes" className="text-sm text-blue-600">{L.classes}</Link>
           <select
             aria-label={L.subject} value={subjectId} className="rounded border p-1 text-sm"
             onChange={(e) => setSubjectId(e.target.value)}

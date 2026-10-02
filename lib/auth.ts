@@ -59,3 +59,13 @@ export async function requireLog(user: AppUser, logId: string) {
   const [l] = await sql<{ subject_id: string | null }[]>`select subject_id from chat_logs where id = ${logId}`;
   if (!l || !inScope(await subjectScope(user), l.subject_id)) notFound();
 }
+
+/** 404 unless the user is an admin, or the teacher of this class who still teaches its subject. */
+export async function requireClass(user: AppUser, classId: string) {
+  const [c] = await sql<{ teacher_id: string | null; subject_id: string; archived: boolean }[]>`
+    select teacher_id, subject_id, archived from classes where id = ${classId}`;
+  const ok = c && (user.role === 'admin'
+    || (user.role === 'teacher' && c.teacher_id === user.id && inScope(await subjectScope(user), c.subject_id)));
+  if (!ok) notFound();
+  return c;
+}

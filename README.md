@@ -63,3 +63,8 @@ Design: `docs/superpowers/specs/2026-09-26-rag-chatbot-design.md` · Plan: `docs
 - `admin`, `teacher`, `student`. Signup always creates a student; admins change roles and assign teacher subjects at `/admin/users`.
 - Teachers see documents, flags and chat logs for their assigned subjects only (`subjectScope` / `requireDocument` / `requireLog` in `lib/auth.ts`); Subjects and Users are admin-only.
 - First admin on a fresh database: sign up, then `npm run make-admin -- you@example.com`.
+
+### Classes
+
+- Staff create classes at `/admin/classes` (teachers: own subjects, as themselves; admins: any subject, any assigned teacher). Each class has a join code (`XXXX-XXXX`, no O/0/I/1), a roster and announcements; archive closes joins and posting.
+- Students join at `/classes` (link in the chat header) and read their classes' announcements. Classes group students; they do not limit which subjects the tutor answers.
