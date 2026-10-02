@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateQuestions, publicQuestions, gradeQuiz } from '@/lib/quiz';
+import { validateQuestions, publicQuestions, gradeQuiz, shuffleOptions } from '@/lib/quiz';
 
 const ids = ['c1', 'c2', 'c3'];
 const q = (over: Record<string, unknown> = {}) => ({
@@ -56,5 +56,22 @@ describe('gradeQuiz', () => {
     expect(gradeQuiz(qs, [0, 1, 4])).toBeNull();
     expect(gradeQuiz(qs, [0, 1, -1])).toBeNull();
     expect(gradeQuiz(qs, [0, 1, 1.5])).toBeNull();
+  });
+});
+
+describe('shuffleOptions', () => {
+  const base = validateQuestions({ questions: [q({ answer: 2 })] }, ids)[0];
+  it('keeps the same options and moves the answer with its text', () => {
+    for (const r of [0, 0.3, 0.6, 0.99]) {
+      const out = shuffleOptions(base, () => r);
+      expect([...out.options].sort()).toEqual([...base.options].sort());
+      expect(out.options[out.answer]).toBe(base.options[base.answer]);
+    }
+  });
+  it('spreads the correct answer across positions', () => {
+    let seed = 1;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const positions = new Set(Array.from({ length: 40 }, () => shuffleOptions(base, rand).answer));
+    expect(positions.size).toBe(4);
   });
 });

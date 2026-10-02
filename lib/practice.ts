@@ -1,7 +1,7 @@
 import { sql, asUser } from '@/lib/db';
 import { generateQuizJson } from '@/lib/gemini';
 import { quizSystemPrompt } from '@/lib/prompts';
-import { validateQuestions, gradeQuiz, MIN_QUESTIONS, type QuizQuestion } from '@/lib/quiz';
+import { validateQuestions, gradeQuiz, shuffleOptions, MIN_QUESTIONS, type QuizQuestion } from '@/lib/quiz';
 
 export const DAILY_QUIZZES = 20;
 const MAX_CHUNKS = 10;
@@ -29,28 +29,63 @@ export function quizUnits(subjectId: string) {
     order by u.sort_order, u.name_en`;
 }
 
-export async function storeQuiz(userId: string, unitId: string, lang: Lang, questions: QuizQuestion[]): Promise<string> {
-  const [row] = await asUser(userId, (tx) => tx<{ id: string }[]>`
-    insert into practice_quizzes (student_id, unit_id, lang, questions)
-    values (${userId}, ${unitId}, ${lang}, ${sql.json(questions)}) returning id`);
-  return row.id;
+/** Reserves one of today's quizzes under a per-user lock, before the slow AI call. null = daily limit reached. */
+export function reserveQuiz(userId: string, unitId: string, lang: Lang): Promise<string | null> {
+  return asUser(userId, async (tx) => {
+    await tx`select pg_advisory_xact_lock(hashtext(${`quiz:${userId}`}))`;
+    const [{ n }] = await tx<{ n: number }[]>`
+      select count(*)::int as n from practice_quizzes
+      where student_id = ${userId}
+        and created_at >= (date_trunc('day', now() at time zone 'Asia/Colombo') at time zone 'Asia/Colombo')`;
+    if (n >= DAILY_QUIZZES) return null;
+    const [row] = await tx<{ id: string }[]>`
+      insert into practice_quizzes (student_id, unit_id, lang, status)
+      values (${userId}, ${unitId}, ${lang}, 'generating') returning id`;
+    return row.id;
+  });
 }
 
-/** Picks material, asks Gemini (one retry), validates, stores. Nothing is stored on failure. */
+/** Fills a reserved quiz, or marks it failed (it still counts toward the daily limit). */
+export function finishQuiz(userId: string, id: string, questions: QuizQuestion[] | null) {
+  return asUser(userId, (tx) => questions
+    ? tx`update practice_quizzes set questions = ${sql.json(questions)}, status = 'ready' where id = ${id}`
+    : tx`update practice_quizzes set status = 'failed' where id = ${id}`);
+}
+
+/** Reserve + fill in one go (used by checks that skip the AI call). */
+export async function storeQuiz(userId: string, unitId: string, lang: Lang, questions: QuizQuestion[]): Promise<string> {
+  const id = await reserveQuiz(userId, unitId, lang);
+  if (!id) throw new Error('daily quiz limit reached');
+  await finishQuiz(userId, id, questions);
+  return id;
+}
+
+/** Picks material, reserves a slot, asks Gemini (a second try only after bad output), validates, shuffles, stores. */
 export async function makePracticeQuiz(userId: string, unitId: string, lang: Lang): Promise<MakeResult> {
-  if ((await quizzesToday(userId)) >= DAILY_QUIZZES) return { error: 'limit' };
   const chunks = await sql<{ id: string; content: string; title: string; page_no: number }[]>`
     select c.id, c.content, d.title, c.page_no from chunks c join documents d on d.id = c.document_id
     where c.unit_id = ${unitId} and d.status = 'live' order by random() limit ${MAX_CHUNKS}`;
   if (chunks.length < MIN_CHUNKS) return { error: 'material' };
+  const id = await reserveQuiz(userId, unitId, lang);
+  if (!id) return { error: 'limit' };
+
   const user = `<sources>\n${chunks.map((c, i) => `[${i + 1}] ${c.title} · page ${c.page_no}\n${c.content}`).join('\n\n---\n\n')}\n</sources>`;
   const ids = chunks.map((c) => c.id);
   let questions: QuizQuestion[] = [];
   for (let attempt = 0; attempt < 2 && questions.length < MIN_QUESTIONS; attempt++) {
-    questions = validateQuestions(await generateQuizJson(quizSystemPrompt(lang), user).catch(() => null), ids);
+    let raw: unknown;
+    try {
+      raw = await generateQuizJson(quizSystemPrompt(lang), user);
+    } catch (e) {
+      console.error('quiz generation failed', e); // already retried inside; another attempt would only add waiting
+      break;
+    }
+    questions = validateQuestions(raw, ids);
+    if (questions.length < MIN_QUESTIONS) console.error('quiz output invalid', { unitId, valid: questions.length });
   }
-  if (questions.length < MIN_QUESTIONS) return { error: 'failed' };
-  return { id: await storeQuiz(userId, unitId, lang, questions) };
+  const ok = questions.length >= MIN_QUESTIONS;
+  await finishQuiz(userId, id, ok ? questions.map((q) => shuffleOptions(q)) : null);
+  return ok ? { id } : { error: 'failed' };
 }
 
 export type QuizView = {
@@ -65,7 +100,7 @@ export async function getQuiz(userId: string, id: string): Promise<QuizView | nu
     select q.id, q.unit_id, u.name_si as unit_si, u.name_en as unit_en, u.subject_id,
            q.questions, q.answers, q.score, q.submitted_at
     from practice_quizzes q join units u on u.id = q.unit_id
-    where q.id = ${id} and q.student_id = ${userId}`;
+    where q.id = ${id} and q.student_id = ${userId} and q.status = 'ready'`;
   if (!q) return null;
   const sources: QuizView['sources'] = {};
   if (q.submitted_at) {
@@ -81,7 +116,7 @@ export async function getQuiz(userId: string, id: string): Promise<QuizView | nu
 /** Marks the owner's unsubmitted quiz. 'invalid' = bad answers; 'done' = not found or already submitted. */
 export async function submitQuiz(userId: string, id: string, answers: number[]): Promise<'ok' | 'invalid' | 'done'> {
   const [q] = await sql<{ questions: QuizQuestion[] }[]>`
-    select questions from practice_quizzes where id = ${id} and student_id = ${userId} and submitted_at is null`;
+    select questions from practice_quizzes where id = ${id} and student_id = ${userId} and status = 'ready' and submitted_at is null`;
   if (!q) return 'done';
   const graded = gradeQuiz(q.questions, answers);
   if (!graded) return 'invalid';
@@ -95,6 +130,6 @@ export function recentQuizzes(userId: string, subjectId: string) {
   return sql<{ id: string; unit_si: string; unit_en: string; score: number | null; total: number; created_at: Date }[]>`
     select q.id, u.name_si as unit_si, u.name_en as unit_en, q.score, jsonb_array_length(q.questions) as total, q.created_at
     from practice_quizzes q join units u on u.id = q.unit_id
-    where q.student_id = ${userId} and u.subject_id = ${subjectId}
+    where q.student_id = ${userId} and u.subject_id = ${subjectId} and q.status = 'ready'
     order by q.created_at desc limit 10`;
 }

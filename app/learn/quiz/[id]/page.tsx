@@ -8,6 +8,9 @@ import Markdown from '@/app/Markdown';
 import QuizForm from './QuizForm';
 import QuizMeButton from '../../QuizMeButton';
 
+// Quiz generation runs in a server action on this page and can take ~30 s when Gemini is slow.
+export const maxDuration = 60;
+
 export default async function QuizPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;

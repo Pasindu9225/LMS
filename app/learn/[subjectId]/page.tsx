@@ -10,6 +10,9 @@ import QuizMeButton from '../QuizMeButton';
 
 const pdf = (id: string) => `/api/pdf/${id}?page=1`;
 
+// Quiz generation runs in a server action on this page and can take ~30 s when Gemini is slow.
+export const maxDuration = 60;
+
 export default async function SubjectPage({ params }: { params: Promise<{ subjectId: string }> }) {
   const user = await requireUser();
   const { subjectId } = await params;

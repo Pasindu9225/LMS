@@ -37,3 +37,13 @@ export function gradeQuiz(qs: QuizQuestion[], answers: unknown[]): { score: numb
   const correct = qs.map((q, i) => q.answer === answers[i]);
   return { score: correct.filter(Boolean).length, correct };
 }
+
+/** Fisher–Yates over the options, answer index following its text: models favour putting the answer first. */
+export function shuffleOptions(q: QuizQuestion, rand: () => number = Math.random): QuizQuestion {
+  const order = [0, 1, 2, 3];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return { ...q, options: order.map((k) => q.options[k]), answer: order.indexOf(q.answer) };
+}

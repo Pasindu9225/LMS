@@ -123,6 +123,7 @@ export async function* generateAnswer(system: string, user: string, history: Tur
 /** Quiz questions as JSON (validated by lib/quiz validateQuestions before use). */
 export async function generateQuizJson(system: string, user: string): Promise<unknown> {
   const chatModel = model('GEMINI_CHAT_MODEL');
+  // One quick retry only: a student is waiting, and the page allows 60 s in total.
   const res = await withRetry(() =>
     ai().models.generateContent({
       model: chatModel,
@@ -152,6 +153,7 @@ export async function generateQuizJson(system: string, user: string): Promise<un
         },
       },
     }),
+    1, 2000,
   );
   try {
     return JSON.parse(res.text ?? '');
