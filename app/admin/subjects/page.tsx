@@ -6,9 +6,10 @@ const input = 'rounded border p-1 text-sm';
 
 export default async function SubjectsPage() {
   await requireAdmin();
-  const subjects = await sql<{ id: string; name_si: string; name_en: string; docs: number; classes: number }[]>`
+  const subjects = await sql<{ id: string; name_si: string; name_en: string; docs: number; classes: number; lessons: number }[]>`
     select s.id, s.name_si, s.name_en, (select count(*)::int from documents d where d.subject_id = s.id) as docs,
-           (select count(*)::int from classes c where c.subject_id = s.id) as classes
+           (select count(*)::int from classes c where c.subject_id = s.id) as classes,
+           (select count(*)::int from lessons l join units u on u.id = l.unit_id where u.subject_id = s.id) as lessons
     from subjects s order by s.name_en`;
   const units = await sql<{ id: string; subject_id: string; name_si: string; name_en: string; sort_order: number; lessons: number }[]>`
     select u.id, u.subject_id, u.name_si, u.name_en, u.sort_order,
@@ -33,13 +34,13 @@ export default async function SubjectsPage() {
               <input name="name_en" defaultValue={s.name_en} required className={input} />
               <button className="text-sm text-blue-600">Save</button>
             </form>
-            {s.docs === 0 && s.classes === 0 ? (
+            {s.docs === 0 && s.classes === 0 && s.lessons === 0 ? (
               <form action={deleteSubject}>
                 <input type="hidden" name="id" value={s.id} />
                 <button className="text-sm text-red-600">Delete</button>
               </form>
             ) : (
-              <span className="text-xs text-gray-500">{s.docs} documents · {s.classes} classes</span>
+              <span className="text-xs text-gray-500">{s.docs} documents · {s.classes} classes · {s.lessons} lessons</span>
             )}
           </div>
 
