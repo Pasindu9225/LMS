@@ -74,3 +74,8 @@ Design: `docs/superpowers/specs/2026-09-26-rag-chatbot-design.md` · Plan: `docs
 - Staff write lessons per unit at `/admin/lessons` (scoped to their subjects): Markdown notes with LaTeX and a live preview, an optional YouTube link (any normal link format; played via youtube-nocookie), and links to textbook page ranges of this subject's documents. Drafts are staff-only.
 - Students browse `/learn` → subject → lesson, mark lessons done and see progress per subject and unit. Each subject page lists live past papers next to their marking schemes by year. Lessons are not used by the AI tutor.
 - A unit with lessons can't be deleted.
+
+### Practice quizzes
+
+- On a subject page (`/learn/<subject>`), each unit with live material has **Quiz me**: Gemini writes multiple-choice questions only from up to 10 random chunks of that unit; malformed questions are dropped (`lib/quiz.ts validateQuestions`), and the answer key never reaches the browser before submitting.
+- Results show the score, correct answers, explanations and the source textbook page. 20 quizzes per student per Sri Lanka day.

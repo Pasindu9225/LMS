@@ -119,3 +119,43 @@ export async function* generateAnswer(system: string, user: string, history: Tur
   });
   for await (const chunk of stream) if (chunk.text) yield chunk.text;
 }
+
+/** Quiz questions as JSON (validated by lib/quiz validateQuestions before use). */
+export async function generateQuizJson(system: string, user: string): Promise<unknown> {
+  const chatModel = model('GEMINI_CHAT_MODEL');
+  const res = await withRetry(() =>
+    ai().models.generateContent({
+      model: chatModel,
+      contents: user,
+      config: {
+        systemInstruction: system,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            questions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  answer: { type: Type.INTEGER },
+                  explanation: { type: Type.STRING },
+                  source: { type: Type.INTEGER },
+                },
+                required: ['question', 'options', 'answer', 'explanation', 'source'],
+              },
+            },
+          },
+          required: ['questions'],
+        },
+      },
+    }),
+  );
+  try {
+    return JSON.parse(res.text ?? '');
+  } catch {
+    return null;
+  }
+}
